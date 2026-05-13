@@ -13,6 +13,7 @@ app.use('/api/consultas', require('./src/routes/consultas'));
 app.use('/api/hospitalizaciones', require('./src/routes/hospitalizaciones'));
 app.use('/api/cirugias', require('./src/routes/cirugias'));
 app.use('/api/anestesia', require('./src/routes/anestesia'));
+app.use('/api/vacunas', require('./src/routes/vacunas'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));

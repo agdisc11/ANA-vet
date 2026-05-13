@@ -32,14 +32,22 @@ export default function Expediente() {
         className="text-blue-600 text-sm mb-4 hover:underline">← Volver</button>
 
       {paciente && (
-        <div className="bg-white rounded-xl shadow p-5 mb-6 flex gap-8">
-          <div>
-            <p className="text-xs text-gray-400 uppercase">Paciente</p>
-            <p className="text-xl font-bold text-gray-800">{paciente.nombre}</p>
+        <div className="bg-white rounded-xl shadow p-5 mb-6">
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <p className="text-xs text-gray-400 uppercase">Paciente</p>
+              <p className="text-xl font-bold text-gray-800">{paciente.nombre}</p>
+            </div>
+            <div><p className="text-xs text-gray-400 uppercase">Especie</p><p className="font-medium">{paciente.especie}</p></div>
+            <div><p className="text-xs text-gray-400 uppercase">Raza</p><p className="font-medium">{paciente.raza}</p></div>
+            <div><p className="text-xs text-gray-400 uppercase">Sexo</p><p className="font-medium">{paciente.sexo}</p></div>
           </div>
-          <div><p className="text-xs text-gray-400 uppercase">Especie</p><p className="font-medium">{paciente.especie}</p></div>
-          <div><p className="text-xs text-gray-400 uppercase">Raza</p><p className="font-medium">{paciente.raza}</p></div>
-          <div><p className="text-xs text-gray-400 uppercase">Sexo</p><p className="font-medium">{paciente.sexo}</p></div>
+          <div className="mt-4 flex gap-2 flex-wrap">
+            <button onClick={() => navigate(`/vacunas/${pacienteId}`)}
+              className="text-xs bg-green-50 dark:bg-green-900 text-green-600 dark:text-white px-3 py-1 rounded-lg hover:bg-green-100">
+              💉 Vacunas
+            </button>
+          </div>
         </div>
       )}
 
