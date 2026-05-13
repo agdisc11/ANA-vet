@@ -91,6 +91,10 @@ export default function Expediente() {
                 className="text-xs bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-white px-3 py-1 rounded-lg hover:bg-blue-100">
                 📋 Consultas
               </button>
+              <button onClick={() => navigate(`/hospitalizacion/${pacienteId}/${e.id}`)}
+                className="text-xs bg-purple-50 dark:bg-purple-900 text-purple-600 dark:text-white px-3 py-1 rounded-lg hover:bg-purple-100">
+                🏥 Hospitalización
+              </button>
             </div>
           </div>
         ))}

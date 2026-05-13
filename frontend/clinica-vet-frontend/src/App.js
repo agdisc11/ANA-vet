@@ -6,6 +6,7 @@ import Tutores from './pages/Tutores';
 import Pacientes from './pages/Pacientes';
 import Expediente from './pages/Expediente';
 import Consulta from './pages/Consulta';
+import Hospitalizacion from './pages/Hospitalizacion';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
               <Route path="/pacientes" element={<Pacientes />} />
               <Route path="/expediente/:pacienteId" element={<Expediente />} />
               <Route path="/consulta/:pacienteId/:expedienteId" element={<Consulta />} />
+              <Route path="/hospitalizacion/:pacienteId/:expedienteId" element={<Hospitalizacion />} />
             </Routes>
           </main>
         </div>
