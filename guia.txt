@@ -1,0 +1,12 @@
+cd backend\clinica-vet-backend
+npm run dev
+
+
+
+
+
+
+
+
+cd frontend\clinica-vet-frontend
+npm start
