@@ -14,7 +14,7 @@ export default function Sidebar() {
   return (
     <aside className="w-56 bg-white dark:bg-gray-900 shadow-md flex flex-col">
       <div className="p-5 border-b dark:border-gray-700">
-        <h1 className="text-xl font-bold text-blue-600">🐾 VetApp</h1>
+        <h1 className="text-xl font-bold text-blue-600">🐾 ANA-vet</h1>
         <p className="text-xs text-gray-400">Sistema Veterinario</p>
       </div>
       <nav className="flex-1 p-4 space-y-1">
