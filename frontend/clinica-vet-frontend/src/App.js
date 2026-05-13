@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Tutores from './pages/Tutores';
 import Pacientes from './pages/Pacientes';
 import Expediente from './pages/Expediente';
+import Consulta from './pages/Consulta';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
               <Route path="/tutores" element={<Tutores />} />
               <Route path="/pacientes" element={<Pacientes />} />
               <Route path="/expediente/:pacienteId" element={<Expediente />} />
+              <Route path="/consulta/:pacienteId/:expedienteId" element={<Consulta />} />
             </Routes>
           </main>
         </div>

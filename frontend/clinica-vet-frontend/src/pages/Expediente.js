@@ -86,6 +86,12 @@ export default function Expediente() {
               {e.abordaje_dx && <div><span className="font-semibold text-gray-600">Abordaje dx: </span>{e.abordaje_dx}</div>}
               {e.dx_definitivo && <div className="col-span-2"><span className="font-semibold text-gray-600">Dx definitivo: </span>{e.dx_definitivo}</div>}
             </div>
+            <div className="mt-3 flex gap-2">
+              <button onClick={() => navigate(`/consulta/${pacienteId}/${e.id}`)}
+                className="text-xs bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-white px-3 py-1 rounded-lg hover:bg-blue-100">
+                📋 Consultas
+              </button>
+            </div>
           </div>
         ))}
         {expedientes.length === 0 && <p className="text-gray-400 text-center py-6">Sin expedientes</p>}
