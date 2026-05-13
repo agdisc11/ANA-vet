@@ -7,6 +7,7 @@ import Pacientes from './pages/Pacientes';
 import Expediente from './pages/Expediente';
 import Consulta from './pages/Consulta';
 import Hospitalizacion from './pages/Hospitalizacion';
+import Cirugia from './pages/Cirugia';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
               <Route path="/expediente/:pacienteId" element={<Expediente />} />
               <Route path="/consulta/:pacienteId/:expedienteId" element={<Consulta />} />
               <Route path="/hospitalizacion/:pacienteId/:expedienteId" element={<Hospitalizacion />} />
+              <Route path="/cirugia/:pacienteId/:expedienteId" element={<Cirugia />} />
             </Routes>
           </main>
         </div>
