@@ -53,7 +53,7 @@ export default function Pacientes() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Pacientes</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Pacientes</h2>
         <button onClick={() => setMostrarForm(!mostrarForm)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
           + Nuevo paciente
@@ -61,9 +61,9 @@ export default function Pacientes() {
       </div>
 
       {mostrarForm && (
-        <div className="bg-white rounded-xl shadow p-5 mb-6 grid grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-5 mb-6 grid grid-cols-2 gap-4">
           <select value={form.tutor_id} onChange={e => setForm({...form, tutor_id: e.target.value})}
-            className="border rounded-lg px-3 py-2 text-sm col-span-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+            className="border rounded-lg px-3 py-2 text-sm col-span-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
             <option value="">Seleccionar tutor</option>
             {tutores.map(t => <option key={t.id} value={t.id}>{t.nombre} {t.apellidos}</option>)}
           </select>
@@ -78,17 +78,17 @@ export default function Pacientes() {
           ].map(f => (
             <input key={f.key} placeholder={f.label}
               value={form[f.key]} onChange={e => setForm({...form, [f.key]: e.target.value})}
-              className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              className="border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300" />
           ))}
           <select value={form.sexo} onChange={e => setForm({...form, sexo: e.target.value})}
-            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            className="border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
             <option value="">Sexo</option>
             <option value="Macho">Macho</option>
             <option value="Hembra">Hembra</option>
           </select>
           <input type="date" value={form.fecha_nacimiento}
             onChange={e => setForm({...form, fecha_nacimiento: e.target.value})}
-            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+            className="border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300" />
           <button onClick={guardar}
             className="col-span-2 bg-green-500 text-white py-2 rounded-lg text-sm hover:bg-green-600">
             Guardar

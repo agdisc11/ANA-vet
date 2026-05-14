@@ -20,7 +20,7 @@ export default function Tutores() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Tutores</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Tutores</h2>
         <button onClick={() => setMostrarForm(!mostrarForm)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
           + Nuevo tutor
@@ -28,11 +28,11 @@ export default function Tutores() {
       </div>
 
       {mostrarForm && (
-        <div className="bg-white rounded-xl shadow p-5 mb-6 grid grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-5 mb-6 grid grid-cols-2 gap-4">
           {['nombre','apellidos','telefono','whatsapp','correo','direccion'].map(f => (
             <input key={f} placeholder={f.charAt(0).toUpperCase() + f.slice(1)}
               value={form[f]} onChange={e => setForm({...form, [f]: e.target.value})}
-              className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              className="border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300" />
           ))}
           <button onClick={guardar}
             className="col-span-2 bg-green-500 text-white py-2 rounded-lg text-sm hover:bg-green-600">
