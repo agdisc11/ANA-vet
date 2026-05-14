@@ -1,18 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../api';
+import { useSelectedAnimal } from '../SelectedAnimalContext';
 
 export default function Expediente() {
   const { pacienteId } = useParams();
   const navigate = useNavigate();
+  const { setSelectedAnimal } = useSelectedAnimal();
   const [paciente, setPaciente] = useState(null);
   const [expedientes, setExpedientes] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
 
   useEffect(() => {
+    setSelectedAnimal(null);
     API.get(`/pacientes/${pacienteId}`).then(r => setPaciente(r.data));
     API.get(`/expedientes/${pacienteId}`).then(r => setExpedientes(r.data));
-  }, [pacienteId]);
+  }, [pacienteId, setSelectedAnimal]);
+
+  useEffect(() => {
+    if (paciente) {
+      setSelectedAnimal(paciente);
+    }
+  }, [paciente, setSelectedAnimal]);
+
+  useEffect(() => {
+    return () => setSelectedAnimal(null);
+  }, [setSelectedAnimal]);
 
   const guardar = async () => {
     await API.post('/expedientes', { paciente_id: pacienteId });

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './ThemeContext';
+import { SelectedAnimalProvider } from './SelectedAnimalContext';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Tutores from './pages/Tutores';
@@ -12,12 +13,13 @@ import Vacunas from './pages/Vacunas';
 
 function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <div className="flex h-screen bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto p-6 text-gray-900 dark:text-gray-100">
-            <Routes>
+    <SelectedAnimalProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <div className="flex h-screen bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto p-6 text-gray-900 dark:text-gray-100">
+              <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/tutores" element={<Tutores />} />
               <Route path="/pacientes" element={<Pacientes />} />
@@ -31,6 +33,7 @@ function App() {
         </div>
       </BrowserRouter>
     </ThemeProvider>
+  </SelectedAnimalProvider>
   );
 }
 
