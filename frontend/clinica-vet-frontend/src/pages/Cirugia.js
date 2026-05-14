@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API = 'http://localhost:4000/api';
+import API from '../api';
 
 export default function Cirugia() {
   const { expedienteId, pacienteId } = useParams();
@@ -10,30 +8,31 @@ export default function Cirugia() {
   const [cirugias, setCirugias] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState({
-    fecha: '', procedimiento: '', plan_quirurgico: '', notas: '',
+    fecha: '', procedimiento: '', plan_quirurgico: '', notas: '', consentimiento: '',
     protocolo: '', farmacos: '', dosis: '', observaciones_anestesia: ''
   });
 
-  const cargar = () => axios.get(`${API}/cirugias/${expedienteId}`).then(r => setCirugias(r.data));
+  const cargar = () => API.get(`/cirugias/${expedienteId}`).then(r => setCirugias(r.data));
 
   useEffect(() => { cargar(); }, [expedienteId]);
 
   const guardar = async () => {
-    const res = await axios.post(`${API}/cirugias`, {
+    const res = await API.post('/cirugias', {
       expediente_id: expedienteId,
       fecha: form.fecha,
       procedimiento: form.procedimiento,
       plan_quirurgico: form.plan_quirurgico,
-      notas: form.notas
+      notas: form.notas,
+      consentimiento: form.consentimiento
     });
-    await axios.post(`${API}/anestesia`, {
+    await API.post('/anestesia', {
       cirugia_id: res.data.id,
       protocolo: form.protocolo,
       farmacos: form.farmacos,
       dosis: form.dosis,
       observaciones: form.observaciones_anestesia
     });
-    setForm({ fecha: '', procedimiento: '', plan_quirurgico: '', notas: '', protocolo: '', farmacos: '', dosis: '', observaciones_anestesia: '' });
+    setForm({ fecha: '', procedimiento: '', plan_quirurgico: '', notas: '', consentimiento: '', protocolo: '', farmacos: '', dosis: '', observaciones_anestesia: '' });
     setMostrarForm(false);
     cargar();
   };
@@ -60,6 +59,7 @@ export default function Cirugia() {
             { key: 'procedimiento', label: 'Procedimiento' },
             { key: 'plan_quirurgico', label: 'Plan quirurgico' },
             { key: 'notas', label: 'Notas' },
+            { key: 'consentimiento', label: 'Consentimiento' },
           ].map(f => (
             <textarea key={f.key} placeholder={f.label} rows={3}
               value={form[f.key]} onChange={e => setForm({...form, [f.key]: e.target.value})}
@@ -91,6 +91,7 @@ export default function Cirugia() {
             <div className="grid grid-cols-2 gap-3 text-sm dark:text-gray-200">
               {c.plan_quirurgico && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Plan quirurgico: </span>{c.plan_quirurgico}</div>}
               {c.notas && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Notas: </span>{c.notas}</div>}
+              {c.consentimiento && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Consentimiento: </span>{c.consentimiento}</div>}
             </div>
           </div>
         ))}

@@ -11,12 +11,17 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res) => {
   const { nombre, apellidos, telefono, whatsapp, correo, direccion } = req.body;
+  if (!nombre || !apellidos) {
+    return res.status(400).json({ error: 'nombre y apellidos son requeridos' });
+  }
+
+  const codigo = `TUT-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
   db.query(
-    'INSERT INTO tutor (nombre, apellidos, telefono, whatsapp, correo, direccion) VALUES (?,?,?,?,?,?)',
-    [nombre, apellidos, telefono, whatsapp, correo, direccion],
+    'INSERT INTO tutor (nombre, apellidos, telefono, whatsapp, correo, direccion, codigo) VALUES (?,?,?,?,?,?,?)',
+    [nombre, apellidos, telefono || null, whatsapp || null, correo || null, direccion || null, codigo],
     (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: result.insertId, mensaje: 'Tutor creado' });
+      res.json({ id: result.insertId, codigo, mensaje: 'Tutor creado' });
     }
   );
 });

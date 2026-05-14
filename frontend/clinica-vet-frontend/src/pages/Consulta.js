@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API = 'http://localhost:4000/api';
+import API from '../api';
 
 export default function Consulta() {
   const { expedienteId, pacienteId } = useParams();
@@ -10,16 +8,16 @@ export default function Consulta() {
   const [consultas, setConsultas] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState({
-    fecha: '', motivo: '', anamnesis: '', examen_fisico: '', indicaciones: ''
+    fecha: '', motivo: '', anamnesis: '', examen_fisico: '', examenes_sistemicos: '', lista_problemas: '', dx_presuntivo: '', abordaje_dx: '', dx_definitivo: '', indicaciones: '', tratamiento: '', tratamiento_etiologico: '', seguimiento_medico: ''
   });
 
-  const cargar = () => axios.get(`${API}/consultas/${expedienteId}`).then(r => setConsultas(r.data));
+  const cargar = () => API.get(`/consultas/${expedienteId}`).then(r => setConsultas(r.data));
 
   useEffect(() => { cargar(); }, [expedienteId]);
 
   const guardar = async () => {
-    await axios.post(`${API}/consultas`, { expediente_id: expedienteId, ...form });
-    setForm({ fecha: '', motivo: '', anamnesis: '', examen_fisico: '', indicaciones: '' });
+    await API.post('/consultas', { expediente_id: expedienteId, ...form });
+    setForm({ fecha: '', motivo: '', anamnesis: '', examen_fisico: '', examenes_sistemicos: '', lista_problemas: '', dx_presuntivo: '', abordaje_dx: '', dx_definitivo: '', indicaciones: '', tratamiento: '', tratamiento_etiologico: '', seguimiento_medico: '' });
     setMostrarForm(false);
     cargar();
   };
@@ -44,8 +42,16 @@ export default function Consulta() {
           {[
             { key: 'motivo', label: 'Motivo de consulta' },
             { key: 'anamnesis', label: 'Anamnesis' },
-            { key: 'examen_fisico', label: 'Examen fisico' },
+            { key: 'examen_fisico', label: 'Examen físico' },
+            { key: 'examenes_sistemicos', label: 'Exámenes sistémicos' },
+            { key: 'lista_problemas', label: 'Lista de problemas' },
+            { key: 'dx_presuntivo', label: 'Dx presuntivo' },
+            { key: 'abordaje_dx', label: 'Abordaje diagnóstico' },
+            { key: 'dx_definitivo', label: 'Dx definitivo' },
             { key: 'indicaciones', label: 'Indicaciones' },
+            { key: 'tratamiento', label: 'Tratamiento' },
+            { key: 'tratamiento_etiologico', label: 'Tratamiento etiológico' },
+            { key: 'seguimiento_medico', label: 'Seguimiento médico' },
           ].map(f => (
             <textarea key={f.key} placeholder={f.label} rows={3}
               value={form[f.key]} onChange={e => setForm({...form, [f.key]: e.target.value})}
@@ -65,8 +71,16 @@ export default function Consulta() {
             <div className="grid grid-cols-2 gap-3 text-sm dark:text-gray-200">
               {c.motivo && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Motivo: </span>{c.motivo}</div>}
               {c.anamnesis && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Anamnesis: </span>{c.anamnesis}</div>}
-              {c.examen_fisico && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Examen fisico: </span>{c.examen_fisico}</div>}
+              {c.examen_fisico && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Examen físico: </span>{c.examen_fisico}</div>}
+              {c.examenes_sistemicos && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Exámenes sistémicos: </span>{c.examenes_sistemicos}</div>}
+              {c.lista_problemas && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Lista de problemas: </span>{c.lista_problemas}</div>}
+              {c.dx_presuntivo && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Dx presuntivo: </span>{c.dx_presuntivo}</div>}
+              {c.abordaje_dx && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Abordaje dx: </span>{c.abordaje_dx}</div>}
+              {c.dx_definitivo && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Dx definitivo: </span>{c.dx_definitivo}</div>}
               {c.indicaciones && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Indicaciones: </span>{c.indicaciones}</div>}
+              {c.tratamiento && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Tratamiento: </span>{c.tratamiento}</div>}
+              {c.tratamiento_etiologico && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Tratamiento etiológico: </span>{c.tratamiento_etiologico}</div>}
+              {c.seguimiento_medico && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Seguimiento médico: </span>{c.seguimiento_medico}</div>}
             </div>
           </div>
         ))}

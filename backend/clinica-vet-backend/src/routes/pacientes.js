@@ -4,7 +4,8 @@ const db = require('../db/connection');
 
 router.get('/', (req, res) => {
   const sql = `
-    SELECT p.*, CONCAT(t.nombre, ' ', t.apellidos) AS tutor
+    SELECT p.*, CONCAT(t.nombre, ' ', t.apellidos) AS tutor,
+      TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS edad
     FROM paciente p
     JOIN tutor t ON p.tutor_id = t.id
   `;
@@ -15,7 +16,15 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  db.query('SELECT * FROM paciente WHERE id = ?', [req.params.id], (err, results) => {
+  const sql = `
+    SELECT p.*, CONCAT(t.nombre, ' ', t.apellidos) AS tutor,
+      TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS edad
+    FROM paciente p
+    JOIN tutor t ON p.tutor_id = t.id
+    WHERE p.id = ?
+  `;
+
+  db.query(sql, [req.params.id], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     if (results.length === 0) return res.status(404).json({ mensaje: 'No encontrado' });
     res.json(results[0]);
@@ -23,7 +32,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { tutor_id, nombre, especie, raza, sexo, fecha_nacimiento, funcion_zootecnica, tatuaje, microchip } = req.body;
+  const { tutor_id, nombre, especie, raza, sexo, fecha_nacimiento, funcion_zootecnica, tatuaje, microchip, esquemas_preventivos } = req.body;
   
   // Validar campos requeridos
   if (!tutor_id || !nombre || !especie || !sexo) {
@@ -31,8 +40,8 @@ router.post('/', (req, res) => {
   }
   
   db.query(
-    'INSERT INTO paciente (tutor_id, nombre, especie, raza, sexo, fecha_nacimiento, funcion_zootecnica, tatuaje, microchip) VALUES (?,?,?,?,?,?,?,?,?)',
-    [tutor_id, nombre, especie, raza || null, sexo, fecha_nacimiento || null, funcion_zootecnica || null, tatuaje || null, microchip || null],
+    'INSERT INTO paciente (tutor_id, nombre, especie, raza, sexo, fecha_nacimiento, funcion_zootecnica, tatuaje, microchip, esquemas_preventivos) VALUES (?,?,?,?,?,?,?,?,?,?)',
+    [tutor_id, nombre, especie, raza || null, sexo, fecha_nacimiento || null, funcion_zootecnica || null, tatuaje || null, microchip || null, esquemas_preventivos || null],
     (err, result) => {
       if (err) {
         console.error('Error al insertar paciente:', err);
@@ -44,10 +53,10 @@ router.post('/', (req, res) => {
 });
 
 router.put('/:id', (req, res) => {
-  const { nombre, especie, raza, sexo, fecha_nacimiento, funcion_zootecnica, tatuaje, microchip } = req.body;
+  const { nombre, especie, raza, sexo, fecha_nacimiento, funcion_zootecnica, tatuaje, microchip, esquemas_preventivos } = req.body;
   db.query(
-    'UPDATE paciente SET nombre=?, especie=?, raza=?, sexo=?, fecha_nacimiento=?, funcion_zootecnica=?, tatuaje=?, microchip=? WHERE id=?',
-    [nombre, especie, raza, sexo, fecha_nacimiento, funcion_zootecnica, tatuaje, microchip, req.params.id],
+    'UPDATE paciente SET nombre=?, especie=?, raza=?, sexo=?, fecha_nacimiento=?, funcion_zootecnica=?, tatuaje=?, microchip=?, esquemas_preventivos=? WHERE id=?',
+    [nombre, especie, raza, sexo, fecha_nacimiento, funcion_zootecnica, tatuaje, microchip, esquemas_preventivos || null, req.params.id],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ mensaje: 'Paciente actualizado' });

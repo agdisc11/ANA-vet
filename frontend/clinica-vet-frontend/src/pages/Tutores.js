@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../api';
 
 export default function Tutores() {
   const [tutores, setTutores] = useState([]);
-  const [form, setForm] = useState({ nombre: '', apellidos: '', telefono: '', correo: '', direccion: '' });
+  const [form, setForm] = useState({ nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' });
   const [mostrarForm, setMostrarForm] = useState(false);
 
-  const cargar = () => axios.get('http://localhost:4000/api/tutores').then(r => setTutores(r.data));
+  const cargar = () => API.get('/tutores').then(r => setTutores(r.data));
 
   useEffect(() => { cargar(); }, []);
 
   const guardar = async () => {
-    await axios.post('http://localhost:4000/api/tutores', form);
-    setForm({ nombre: '', apellidos: '', telefono: '', correo: '', direccion: '' });
+    await API.post('/tutores', form);
+    setForm({ nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' });
     setMostrarForm(false);
     cargar();
   };
@@ -29,7 +29,7 @@ export default function Tutores() {
 
       {mostrarForm && (
         <div className="bg-white rounded-xl shadow p-5 mb-6 grid grid-cols-2 gap-4">
-          {['nombre','apellidos','telefono','correo','direccion'].map(f => (
+          {['nombre','apellidos','telefono','whatsapp','correo','direccion'].map(f => (
             <input key={f} placeholder={f.charAt(0).toUpperCase() + f.slice(1)}
               value={form[f]} onChange={e => setForm({...form, [f]: e.target.value})}
               className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
@@ -44,21 +44,23 @@ export default function Tutores() {
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 uppercase text-xs">
-            <tr>{['Nombre','Teléfono','Correo','Dirección'].map(h => (
+            <tr>{['Código','Nombre','Teléfono','WhatsApp','Correo','Dirección'].map(h => (
               <th key={h} className="px-4 py-3 text-left">{h}</th>
             ))}</tr>
           </thead>
           <tbody>
             {tutores.map(t => (
               <tr key={t.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200">
+                <td className="px-4 py-3 font-medium">{t.codigo || '—'}</td>
                 <td className="px-4 py-3 font-medium">{t.nombre} {t.apellidos}</td>
                 <td className="px-4 py-3">{t.telefono}</td>
+                <td className="px-4 py-3">{t.whatsapp || '—'}</td>
                 <td className="px-4 py-3">{t.correo}</td>
                 <td className="px-4 py-3">{t.direccion}</td>
               </tr>
             ))}
             {tutores.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-gray-400">Sin tutores registrados</td></tr>
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">Sin tutores registrados</td></tr>
             )}
           </tbody>
         </table>

@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API = 'http://localhost:4000/api';
+import API from '../api';
 
 export default function Pacientes() {
   const navigate = useNavigate();
@@ -12,12 +10,12 @@ export default function Pacientes() {
   const [form, setForm] = useState({
     tutor_id: '', nombre: '', especie: '', raza: '',
     sexo: '', fecha_nacimiento: '', funcion_zootecnica: '',
-    tatuaje: '', microchip: ''
+    esquemas_preventivos: '', tatuaje: '', microchip: ''
   });
 
   const cargar = () => {
-    axios.get(`${API}/pacientes`).then(r => setPacientes(r.data));
-    axios.get(`${API}/tutores`).then(r => setTutores(r.data));
+    API.get('/pacientes').then(r => setPacientes(r.data));
+    API.get('/tutores').then(r => setTutores(r.data));
   };
 
   useEffect(() => { cargar(); }, []);
@@ -37,12 +35,13 @@ export default function Pacientes() {
         sexo: form.sexo,
         fecha_nacimiento: form.fecha_nacimiento || null,
         funcion_zootecnica: form.funcion_zootecnica || null,
+        esquemas_preventivos: form.esquemas_preventivos || null,
         tatuaje: form.tatuaje || null,
         microchip: form.microchip || null
       };
       
-      await axios.post(`${API}/pacientes`, datos);
-      setForm({ tutor_id: '', nombre: '', especie: '', raza: '', sexo: '', fecha_nacimiento: '', funcion_zootecnica: '', tatuaje: '', microchip: '' });
+      await API.post('/pacientes', datos);
+      setForm({ tutor_id: '', nombre: '', especie: '', raza: '', sexo: '', fecha_nacimiento: '', funcion_zootecnica: '', esquemas_preventivos: '', tatuaje: '', microchip: '' });
       setMostrarForm(false);
       cargar();
     } catch (error) {
@@ -73,6 +72,7 @@ export default function Pacientes() {
             { key: 'especie', label: 'Especie' },
             { key: 'raza', label: 'Raza' },
             { key: 'funcion_zootecnica', label: 'Función zootécnica' },
+            { key: 'esquemas_preventivos', label: 'Esquemas preventivos' },
             { key: 'tatuaje', label: 'Tatuaje' },
             { key: 'microchip', label: 'Microchip' },
           ].map(f => (
@@ -99,7 +99,7 @@ export default function Pacientes() {
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 uppercase text-xs">
-            <tr>{['Nombre','Especie','Raza','Sexo','Tutor'].map(h => (
+            <tr>{['Nombre','Especie','Raza','Sexo','Esquemas preventivos','Tutor'].map(h => (
               <th key={h} className="px-4 py-3 text-left">{h}</th>
             ))}</tr>
           </thead>
@@ -110,11 +110,12 @@ export default function Pacientes() {
                 <td className="px-4 py-3">{p.especie}</td>
                 <td className="px-4 py-3">{p.raza}</td>
                 <td className="px-4 py-3">{p.sexo}</td>
+                <td className="px-4 py-3">{p.esquemas_preventivos || '—'}</td>
                 <td className="px-4 py-3">{p.tutor}</td>
               </tr>
             ))}
             {pacientes.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400">Sin pacientes registrados</td></tr>
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">Sin pacientes registrados</td></tr>
             )}
           </tbody>
         </table>

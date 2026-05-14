@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from '../api';
 
 const tarjetas = [
   { key: 'tutores', label: 'Tutores', icon: '👤', color: 'bg-blue-500', ruta: '/tutores' },
@@ -16,7 +16,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('http://localhost:4000/api/stats').then(r => setStats(r.data));
+    API.get('/stats').then(r => setStats(r.data));
   }, []);
 
   return (
