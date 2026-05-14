@@ -11,15 +11,15 @@ export default function Consulta() {
     fecha: '', motivo: '', anamnesis: '', examen_fisico: '', examenes_sistemicos: '', lista_problemas: '', dx_presuntivo: '', abordaje_dx: '', dx_definitivo: '', indicaciones: '', tratamiento: '', tratamiento_etiologico: '', seguimiento_medico: ''
   });
 
-  const cargar = () => API.get(`/consultas/${expedienteId}`).then(r => setConsultas(r.data));
-
-  useEffect(() => { cargar(); }, [expedienteId]);
+  useEffect(() => {
+    API.get(`/consultas/${expedienteId}`).then(r => setConsultas(r.data));
+  }, [expedienteId]);
 
   const guardar = async () => {
     await API.post('/consultas', { expediente_id: expedienteId, ...form });
     setForm({ fecha: '', motivo: '', anamnesis: '', examen_fisico: '', examenes_sistemicos: '', lista_problemas: '', dx_presuntivo: '', abordaje_dx: '', dx_definitivo: '', indicaciones: '', tratamiento: '', tratamiento_etiologico: '', seguimiento_medico: '' });
     setMostrarForm(false);
-    cargar();
+    API.get(`/consultas/${expedienteId}`).then(r => setConsultas(r.data));
   };
 
   return (

@@ -12,9 +12,9 @@ export default function Cirugia() {
     protocolo: '', farmacos: '', dosis: '', observaciones_anestesia: ''
   });
 
-  const cargar = () => API.get(`/cirugias/${expedienteId}`).then(r => setCirugias(r.data));
-
-  useEffect(() => { cargar(); }, [expedienteId]);
+  useEffect(() => {
+    API.get(`/cirugias/${expedienteId}`).then(r => setCirugias(r.data));
+  }, [expedienteId]);
 
   const guardar = async () => {
     const res = await API.post('/cirugias', {
@@ -34,7 +34,7 @@ export default function Cirugia() {
     });
     setForm({ fecha: '', procedimiento: '', plan_quirurgico: '', notas: '', consentimiento: '', protocolo: '', farmacos: '', dosis: '', observaciones_anestesia: '' });
     setMostrarForm(false);
-    cargar();
+    API.get(`/cirugias/${expedienteId}`).then(r => setCirugias(r.data));
   };
 
   return (

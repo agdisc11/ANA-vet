@@ -9,15 +9,15 @@ export default function Vacunas() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState({ nombre: '', fecha_aplicacion: '', proxima_dosis: '', lote: '', fabricante: '', via_administracion: '', dosis: '', observaciones: '' });
 
-  const cargar = () => API.get(`/vacunas/${pacienteId}`).then(r => setVacunas(r.data));
-
-  useEffect(() => { cargar(); }, [pacienteId]);
+  useEffect(() => {
+    API.get(`/vacunas/${pacienteId}`).then(r => setVacunas(r.data));
+  }, [pacienteId]);
 
   const guardar = async () => {
     await API.post('/vacunas', { paciente_id: pacienteId, ...form });
     setForm({ nombre: '', fecha_aplicacion: '', proxima_dosis: '', lote: '', fabricante: '', via_administracion: '', dosis: '', observaciones: '' });
     setMostrarForm(false);
-    cargar();
+    API.get(`/vacunas/${pacienteId}`).then(r => setVacunas(r.data));
   };
 
   return (
@@ -71,6 +71,10 @@ export default function Vacunas() {
           <textarea placeholder="Observaciones" rows={2} value={form.observaciones}
             onChange={e => setForm({...form, observaciones: e.target.value})}
             className="border rounded-lg px-3 py-2 text-sm col-span-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+          <button onClick={guardar}
+            className="col-span-2 bg-green-500 text-white py-2 rounded-lg text-sm hover:bg-green-600">
+            Guardar vacuna
+          </button>
         </div>
       )}
 

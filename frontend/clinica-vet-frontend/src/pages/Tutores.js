@@ -6,15 +6,15 @@ export default function Tutores() {
   const [form, setForm] = useState({ nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' });
   const [mostrarForm, setMostrarForm] = useState(false);
 
-  const cargar = () => API.get('/tutores').then(r => setTutores(r.data));
-
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    API.get('/tutores').then(r => setTutores(r.data));
+  }, []);
 
   const guardar = async () => {
     await API.post('/tutores', form);
     setForm({ nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' });
     setMostrarForm(false);
-    cargar();
+    API.get('/tutores').then(r => setTutores(r.data));
   };
 
   return (

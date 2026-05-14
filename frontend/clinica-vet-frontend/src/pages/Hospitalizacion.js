@@ -12,15 +12,15 @@ export default function Hospitalizacion() {
     tratamiento_intrahospitalario: '', abordaje_diagnostico: '', fecha_alta: '', tipo_alta: '', acta_responsiva: ''
   });
 
-  const cargar = () => API.get(`/hospitalizaciones/${expedienteId}`).then(r => setHospitalizaciones(r.data));
-
-  useEffect(() => { cargar(); }, [expedienteId]);
+  useEffect(() => {
+    API.get(`/hospitalizaciones/${expedienteId}`).then(r => setHospitalizaciones(r.data));
+  }, [expedienteId]);
 
   const guardar = async () => {
     await API.post('/hospitalizaciones', { expediente_id: expedienteId, ...form });
     setForm({ fecha_ingreso: '', historia_clinica: '', abordaje_hospitalario: '', tratamiento_intrahospitalario: '', abordaje_diagnostico: '', fecha_alta: '', tipo_alta: '', acta_responsiva: '' });
     setMostrarForm(false);
-    cargar();
+    API.get(`/hospitalizaciones/${expedienteId}`).then(r => setHospitalizaciones(r.data));
   };
 
   return (
