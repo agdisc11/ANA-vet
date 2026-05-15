@@ -2,6 +2,21 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/connection');
 
+router.get('/all', (req, res) => {
+  db.query(
+    `SELECT h.*, e.paciente_id, p.nombre AS paciente_nombre, t.nombre AS tutor_nombre, t.apellidos AS tutor_apellidos
+     FROM hospitalizacion h
+     JOIN expediente e ON h.expediente_id = e.id
+     JOIN paciente p ON e.paciente_id = p.id
+     JOIN tutor t ON p.tutor_id = t.id
+     ORDER BY h.fecha_ingreso DESC`,
+    (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(results);
+    }
+  );
+});
+
 router.get('/:expediente_id', (req, res) => {
   db.query(
     'SELECT * FROM hospitalizacion WHERE expediente_id = ? ORDER BY fecha_ingreso DESC',

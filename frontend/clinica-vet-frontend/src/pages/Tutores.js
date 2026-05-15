@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import API from '../api';
 
 export default function Tutores() {
+  const { search } = useLocation();
   const [tutores, setTutores] = useState([]);
   const [form, setForm] = useState({ nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' });
   const [mostrarForm, setMostrarForm] = useState(false);
 
   useEffect(() => {
     API.get('/tutores').then(r => setTutores(r.data));
-  }, []);
+    if (new URLSearchParams(search).get('new') === 'true') {
+      setMostrarForm(true);
+    }
+  }, [search]);
 
   const guardar = async () => {
     await API.post('/tutores', form);

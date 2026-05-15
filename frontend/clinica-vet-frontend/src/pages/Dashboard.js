@@ -5,10 +5,10 @@ import API from '../api';
 const modulos = [
   { key: 'tutores', label: 'Tutores', icon: '👤', color: 'from-blue-500 to-blue-600', ruta: '/tutores', desc: 'Gestionar propietarios' },
   { key: 'pacientes', label: 'Pacientes', icon: '🐾', color: 'from-green-500 to-green-600', ruta: '/pacientes', desc: 'Animales registrados' },
-  { key: 'consultas', label: 'Consultas', icon: '📋', color: 'from-purple-500 to-purple-600', ruta: null, desc: 'Citas veterinarias' },
-  { key: 'hospitalizaciones', label: 'Hospitalizaciones', icon: '🏥', color: 'from-yellow-500 to-yellow-600', ruta: null, desc: 'Pacientes internados' },
-  { key: 'cirugias', label: 'Cirugías', icon: '🔪', color: 'from-red-500 to-red-600', ruta: null, desc: 'Procedimientos quirúrgicos' },
-  { key: 'vacunas', label: 'Vacunas', icon: '💉', color: 'from-teal-500 to-teal-600', ruta: null, desc: 'Plan de vacunación' },
+  { key: 'consultas', label: 'Consultas', icon: '📋', color: 'from-purple-500 to-purple-600', ruta: '/consultas', desc: 'Citas veterinarias' },
+  { key: 'hospitalizaciones', label: 'Hospitalizaciones', icon: '🏥', color: 'from-yellow-500 to-yellow-600', ruta: '/hospitalizaciones', desc: 'Pacientes internados' },
+  { key: 'cirugias', label: 'Cirugías', icon: '🔪', color: 'from-red-500 to-red-600', ruta: '/cirugias', desc: 'Procedimientos quirúrgicos' },
+  { key: 'vacunas', label: 'Vacunas', icon: '💉', color: 'from-teal-500 to-teal-600', ruta: '/vacunas', desc: 'Plan de vacunación' },
 ];
 
 export default function Dashboard() {

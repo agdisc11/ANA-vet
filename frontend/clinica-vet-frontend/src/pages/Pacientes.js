@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import API from '../api';
 
 const especieOptions = [
@@ -86,6 +86,7 @@ function getPreviewColor(especie, raza) {
 
 export default function Pacientes() {
   const navigate = useNavigate();
+  const { search } = useLocation();
   const [pacientes, setPacientes] = useState([]);
   const [tutores, setTutores] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -100,7 +101,12 @@ export default function Pacientes() {
     API.get('/tutores').then(r => setTutores(r.data));
   };
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    cargar();
+    if (new URLSearchParams(search).get('new') === 'true') {
+      setMostrarForm(true);
+    }
+  }, [search]);
 
   const guardar = async () => {
     const razaFinal = form.raza === 'Otro' ? form.raza_custom.trim() : form.raza;

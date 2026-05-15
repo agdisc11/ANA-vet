@@ -6,6 +6,11 @@ const links = [
   { to: '/', label: 'Dashboard', icon: '🏠' },
   { to: '/tutores', label: 'Tutores', icon: '👤' },
   { to: '/pacientes', label: 'Pacientes', icon: '🐾' },
+  { to: '/consultas', label: 'Consultas', icon: '📋' },
+  { to: '/hospitalizaciones', label: 'Hospitalizaciones', icon: '🏥' },
+  { to: '/cirugias', label: 'Cirugías', icon: '🔪' },
+  { to: '/vacunas', label: 'Vacunas', icon: '💉' },
+  { to: '/reportes', label: 'Reportes', icon: '📈' },
 ];
 
 export default function Sidebar() {
