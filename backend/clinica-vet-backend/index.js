@@ -15,6 +15,7 @@ app.use('/api/hospitalizaciones', require('./src/routes/hospitalizaciones'));
 app.use('/api/cirugias', require('./src/routes/cirugias'));
 app.use('/api/anestesia', require('./src/routes/anestesia'));
 app.use('/api/vacunas', require('./src/routes/vacunas'));
+app.use('/api/reports', require('./src/routes/reports'));
 
 app.get('/api/stats', (req, res) => {
   const queries = {
