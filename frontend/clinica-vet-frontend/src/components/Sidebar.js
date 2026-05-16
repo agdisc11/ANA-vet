@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../ThemeContext';
 import { useSelectedAnimal } from '../SelectedAnimalContext';
+import logoClinica from '../assets/logo_clinica.png';
 
 const links = [
   { to: '/', label: 'Dashboard', icon: (
@@ -55,9 +56,11 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shadow-sm flex-shrink-0">
-            <span className="text-lg">🐾</span>
-          </div>
+          <img
+            src={logoClinica}
+            alt="ANA-vet logo"
+            className="w-14 h-auto flex-shrink-0"
+          />
           <div>
             <h1 className="text-base font-bold text-slate-900 dark:text-white leading-tight">ANA-vet</h1>
             <p className="text-xs text-slate-400 dark:text-slate-500">Sistema Veterinario</p>
