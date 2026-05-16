@@ -64,4 +64,12 @@ router.put('/:id', (req, res) => {
   );
 });
 
+router.delete('/:id', (req, res) => {
+  db.query('DELETE FROM paciente WHERE id=?', [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Paciente no encontrado' });
+    res.json({ mensaje: 'Paciente eliminado' });
+  });
+});
+
 module.exports = router;

@@ -103,10 +103,10 @@ export default function Dashboard() {
           <button onClick={() => navigate('/pacientes')} className="bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-700 dark:text-green-400 py-3 rounded-lg font-medium transition">
             Nuevo Paciente
           </button>
-          <button className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-400 py-3 rounded-lg font-medium transition">
+          <button onClick={() => navigate('/consultas')} className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-400 py-3 rounded-lg font-medium transition">
             Nueva Consulta
           </button>
-          <button className="bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 py-3 rounded-lg font-medium transition">
+          <button onClick={() => navigate('/reportes')} className="bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 py-3 rounded-lg font-medium transition">
             Reportes
           </button>
         </div>

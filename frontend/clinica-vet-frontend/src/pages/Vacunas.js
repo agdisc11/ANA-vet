@@ -79,6 +79,10 @@ export default function Vacunas() {
       )}
 
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow overflow-hidden">
+        <div className="flex gap-4 px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b dark:border-gray-700">
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-red-100 border border-red-300"></span> Vencida o vence hoy</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-yellow-100 border border-yellow-300"></span> Vence en 30 días</span>
+        </div>
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 uppercase text-xs">
             <tr>{['Vacuna','Aplicacion','Proxima dosis','Lote','Fabricante','Vía','Dosis'].map(h => (
@@ -86,8 +90,22 @@ export default function Vacunas() {
             ))}</tr>
           </thead>
           <tbody>
-            {vacunas.map(v => (
-              <tr key={v.id} className="border-t dark:border-gray-700 dark:text-gray-200">
+            {vacunas.map(v => {
+              const hoy = new Date();
+              hoy.setHours(0, 0, 0, 0);
+              let rowClass = 'border-t dark:border-gray-700 dark:text-gray-200';
+              if (v.proxima_dosis) {
+                const proxima = new Date(v.proxima_dosis);
+                proxima.setHours(0, 0, 0, 0);
+                const diffDias = Math.ceil((proxima - hoy) / (1000 * 60 * 60 * 24));
+                if (diffDias <= 0) {
+                  rowClass = 'border-t border-red-200 bg-red-50 dark:bg-red-900/30 dark:border-red-700 text-red-800 dark:text-red-200';
+                } else if (diffDias <= 30) {
+                  rowClass = 'border-t border-yellow-200 bg-yellow-50 dark:bg-yellow-900/30 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200';
+                }
+              }
+              return (
+              <tr key={v.id} className={rowClass}>
                 <td className="px-4 py-3 font-medium">{v.nombre}</td>
                 <td className="px-4 py-3">{new Date(v.fecha_aplicacion).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
                 <td className="px-4 py-3">{v.proxima_dosis ? new Date(v.proxima_dosis).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</td>
@@ -96,7 +114,8 @@ export default function Vacunas() {
                 <td className="px-4 py-3">{v.via_administracion || '—'}</td>
                 <td className="px-4 py-3">{v.dosis || '—'}</td>
               </tr>
-            ))}
+              );
+            })}
             {vacunas.length === 0 && (
               <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-400">Sin vacunas registradas</td></tr>
             )}

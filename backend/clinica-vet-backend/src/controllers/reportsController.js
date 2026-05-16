@@ -107,7 +107,8 @@ exports.reporteHospitalizaciones = (req, res) => {
     SELECT h.id, h.fecha_ingreso, h.fecha_salida, h.diagnostico, h.observaciones,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
     FROM hospitalizacion h
-    LEFT JOIN paciente p ON h.paciente_id = p.id
+    LEFT JOIN expediente e ON h.expediente_id = e.id
+    LEFT JOIN paciente p ON e.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
     ORDER BY h.fecha_ingreso DESC
     LIMIT 50
@@ -165,7 +166,8 @@ exports.reporteCirugias = (req, res) => {
     SELECT c.id, c.fecha, c.tipo_cirugia, c.duracion, c.observaciones,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
     FROM cirugia c
-    LEFT JOIN paciente p ON c.paciente_id = p.id
+    LEFT JOIN expediente e ON c.expediente_id = e.id
+    LEFT JOIN paciente p ON e.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
     ORDER BY c.fecha DESC
     LIMIT 50
@@ -223,7 +225,8 @@ exports.reporteConsultas = (req, res) => {
     SELECT c.id, c.fecha, c.motivo, c.diagnostico, c.tratamiento,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
     FROM consulta c
-    LEFT JOIN paciente p ON c.paciente_id = p.id
+    LEFT JOIN expediente e ON c.expediente_id = e.id
+    LEFT JOIN paciente p ON e.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
     ORDER BY c.fecha DESC
     LIMIT 50

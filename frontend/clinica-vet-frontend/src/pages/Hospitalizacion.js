@@ -1,30 +1,80 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../api';
+import Toast from '../components/Toast';
+
+/* ── Confirmation Modal ─────────────────────────────────────────── */
+function ConfirmModal({ open, onConfirm, onCancel }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 w-80 text-center">
+        <p className="text-gray-800 dark:text-white font-semibold text-base mb-2">¿Guardar hospitalización?</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+          Confirma que los datos son correctos antes de registrar.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg border text-sm text-gray-600 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-green-500 text-white text-sm hover:bg-green-600"
+          >
+            Sí, guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Component ─────────────────────────────────────────────── */
+const FORM_EMPTY = {
+  fecha_ingreso: '', historia_clinica: '', abordaje_hospitalario: '',
+  tratamiento_intrahospitalario: '', abordaje_diagnostico: '', fecha_alta: '', tipo_alta: '', acta_responsiva: ''
+};
 
 export default function Hospitalizacion() {
   const { expedienteId, pacienteId } = useParams();
   const navigate = useNavigate();
   const [hospitalizaciones, setHospitalizaciones] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [form, setForm] = useState({
-    fecha_ingreso: '', historia_clinica: '', abordaje_hospitalario: '',
-    tratamiento_intrahospitalario: '', abordaje_diagnostico: '', fecha_alta: '', tipo_alta: '', acta_responsiva: ''
-  });
+  const [form, setForm] = useState(FORM_EMPTY);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [toast, setToast] = useState({ message: '', type: 'success' });
 
-  useEffect(() => {
+  const closeToast = useCallback(() => setToast({ message: '', type: 'success' }), []);
+
+  const fetchHospitalizaciones = useCallback(() => {
     API.get(`/hospitalizaciones/${expedienteId}`).then(r => setHospitalizaciones(r.data));
   }, [expedienteId]);
 
+  useEffect(() => { fetchHospitalizaciones(); }, [fetchHospitalizaciones]);
+
+  const handleGuardarClick = () => setConfirmOpen(true);
+
   const guardar = async () => {
-    await API.post('/hospitalizaciones', { expediente_id: expedienteId, ...form });
-    setForm({ fecha_ingreso: '', historia_clinica: '', abordaje_hospitalario: '', tratamiento_intrahospitalario: '', abordaje_diagnostico: '', fecha_alta: '', tipo_alta: '', acta_responsiva: '' });
-    setMostrarForm(false);
-    API.get(`/hospitalizaciones/${expedienteId}`).then(r => setHospitalizaciones(r.data));
+    setConfirmOpen(false);
+    try {
+      await API.post('/hospitalizaciones', { expediente_id: expedienteId, ...form });
+      setForm(FORM_EMPTY);
+      setMostrarForm(false);
+      fetchHospitalizaciones();
+      setToast({ message: 'Hospitalización guardada correctamente.', type: 'success' });
+    } catch {
+      setToast({ message: 'Error al guardar la hospitalización. Intenta de nuevo.', type: 'error' });
+    }
   };
 
   return (
     <div>
+      <Toast message={toast.message} type={toast.type} onClose={closeToast} />
+      <ConfirmModal open={confirmOpen} onConfirm={guardar} onCancel={() => setConfirmOpen(false)} />
+
       <button onClick={() => navigate(`/expediente/${pacienteId}`)}
         className="text-blue-600 text-sm mb-4 hover:underline">← Volver al expediente</button>
 
@@ -61,7 +111,7 @@ export default function Hospitalizacion() {
             <option value="Fallecimiento">Fallecimiento</option>
             <option value="Otro">Otro</option>
           </select>
-          <button onClick={guardar}
+          <button onClick={handleGuardarClick}
             className="col-span-2 bg-green-500 text-white py-2 rounded-lg text-sm hover:bg-green-600">
             Guardar
           </button>

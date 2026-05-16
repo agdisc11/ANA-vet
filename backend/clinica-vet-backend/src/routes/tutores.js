@@ -26,4 +26,28 @@ router.post('/', (req, res) => {
   );
 });
 
+router.put('/:id', (req, res) => {
+  const { nombre, apellidos, telefono, whatsapp, correo, direccion } = req.body;
+  if (!nombre || !apellidos) {
+    return res.status(400).json({ error: 'nombre y apellidos son requeridos' });
+  }
+  db.query(
+    'UPDATE tutor SET nombre=?, apellidos=?, telefono=?, whatsapp=?, correo=?, direccion=? WHERE id=?',
+    [nombre, apellidos, telefono || null, whatsapp || null, correo || null, direccion || null, req.params.id],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Tutor no encontrado' });
+      res.json({ mensaje: 'Tutor actualizado' });
+    }
+  );
+});
+
+router.delete('/:id', (req, res) => {
+  db.query('DELETE FROM tutor WHERE id=?', [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Tutor no encontrado' });
+    res.json({ mensaje: 'Tutor eliminado' });
+  });
+});
+
 module.exports = router;
