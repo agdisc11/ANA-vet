@@ -15,66 +15,92 @@ export default function ConsultasRegistro() {
       .finally(() => setCargando(false));
   }, []);
 
-  const filteredConsultas = consultas.filter(item => {
-    const query = searchQuery.toLowerCase();
+  const filtradas = consultas.filter(item => {
+    const q = searchQuery.toLowerCase();
     return (
-      item.paciente_nombre?.toLowerCase().includes(query) ||
-      item.tutor_nombre?.toLowerCase().includes(query) ||
-      item.motivo?.toLowerCase().includes(query) ||
-      item.dx_definitivo?.toLowerCase().includes(query) ||
-      item.dx_presuntivo?.toLowerCase().includes(query)
+      item.paciente_nombre?.toLowerCase().includes(q) ||
+      item.tutor_nombre?.toLowerCase().includes(q) ||
+      item.motivo?.toLowerCase().includes(q) ||
+      item.dx_definitivo?.toLowerCase().includes(q) ||
+      item.dx_presuntivo?.toLowerCase().includes(q)
     );
   });
 
   return (
-    <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-6">
+    <div className="animate-fade-in">
+      <div className="page-header">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Consultas</h2>
-          <p className="text-gray-500 dark:text-gray-400">Registro completo de consultas veterinarias.</p>
+          <h1 className="page-title">Consultas</h1>
+          <p className="page-subtitle">Registro completo de consultas veterinarias</p>
         </div>
-        <button onClick={() => navigate('/pacientes?new=true')}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 transition">
-          Nuevo paciente para consulta
+        <button onClick={() => navigate('/pacientes?new=true')} className="btn-primary">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo paciente
         </button>
       </div>
-      <div className="mb-6">
+
+      <div className="relative mb-4">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
         <input
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Buscar por paciente, tutor o diagnóstico"
-          className="w-full md:w-1/2 border rounded-lg px-4 py-3 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Buscar por paciente, tutor o diagnóstico..."
+          className="input pl-9"
         />
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-lg overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 uppercase text-xs">
+      <div className="table-wrapper">
+        <table className="w-full text-sm">
+          <thead className="table-head">
             <tr>
-              <th className="px-4 py-3">Fecha</th>
-              <th className="px-4 py-3">Paciente</th>
-              <th className="px-4 py-3">Tutor</th>
-              <th className="px-4 py-3">Motivo</th>
-              <th className="px-4 py-3">Diagnóstico</th>
-              <th className="px-4 py-3">Acción</th>
+              {['Fecha', 'Paciente', 'Tutor', 'Motivo', 'Diagnóstico', ''].map(h => (
+                <th key={h} className="px-4 py-3 text-left">{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {cargando ? (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500">Cargando registros...</td></tr>
-            ) : filteredConsultas.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500">No hay consultas registradas.</td></tr>
-            ) : filteredConsultas.map(item => (
-              <tr key={item.id} className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                <td className="px-4 py-4">{item.fecha ? new Date(item.fecha).toLocaleDateString('es-MX') : 'Sin fecha'}</td>
-                <td className="px-4 py-4">{item.paciente_nombre}</td>
-                <td className="px-4 py-4">{item.tutor_nombre} {item.tutor_apellidos}</td>
-                <td className="px-4 py-4">{item.motivo || '—'}</td>
-                <td className="px-4 py-4">{item.dx_definitivo || item.dx_presuntivo || '—'}</td>
-                <td className="px-4 py-4">
-                  <button onClick={() => navigate(`/expediente/${item.paciente_id}`)}
-                    className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline">
-                    Ver expediente
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Cargando registros...
+                </div>
+              </td></tr>
+            ) : filtradas.length === 0 ? (
+              <tr><td colSpan={6} className="px-4 py-12 text-center">
+                <div className="text-slate-400 dark:text-slate-500">
+                  <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <p className="text-sm font-medium">Sin consultas registradas</p>
+                </div>
+              </td></tr>
+            ) : filtradas.map(item => (
+              <tr key={item.id} className="table-row">
+                <td className="table-cell text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  {item.fecha ? new Date(item.fecha).toLocaleDateString('es-MX') : '—'}
+                </td>
+                <td className="table-cell font-semibold text-slate-800 dark:text-slate-200">{item.paciente_nombre}</td>
+                <td className="table-cell">{item.tutor_nombre} {item.tutor_apellidos}</td>
+                <td className="table-cell text-slate-500 dark:text-slate-400 max-w-xs truncate">{item.motivo || '—'}</td>
+                <td className="table-cell">
+                  {item.dx_definitivo || item.dx_presuntivo ? (
+                    <span className="badge-green">{item.dx_definitivo || item.dx_presuntivo}</span>
+                  ) : '—'}
+                </td>
+                <td className="table-cell">
+                  <button
+                    onClick={() => navigate(`/expediente/${item.paciente_id}`)}
+                    className="text-violet-600 dark:text-violet-400 text-xs font-semibold hover:underline"
+                  >
+                    Ver expediente →
                   </button>
                 </td>
               </tr>
@@ -82,6 +108,12 @@ export default function ConsultasRegistro() {
           </tbody>
         </table>
       </div>
+
+      {!cargando && filtradas.length > 0 && (
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-3 text-right">
+          {filtradas.length} consulta{filtradas.length !== 1 ? 's' : ''} encontrada{filtradas.length !== 1 ? 's' : ''}
+        </p>
+      )}
     </div>
   );
 }

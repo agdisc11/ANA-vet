@@ -1,13 +1,5 @@
 import { useEffect } from 'react';
 
-/**
- * Toast notification component.
- * Props:
- *   message  – string to display
- *   type     – 'success' | 'error'
- *   onClose  – callback to clear the toast
- *   duration – ms before auto-close (default 3000)
- */
 export default function Toast({ message, type = 'success', onClose, duration = 3000 }) {
   useEffect(() => {
     if (!message) return;
@@ -17,15 +9,27 @@ export default function Toast({ message, type = 'success', onClose, duration = 3
 
   if (!message) return null;
 
-  const base =
-    'fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-lg text-white text-sm font-medium animate-fade-in';
-  const colors = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+  const isSuccess = type === 'success';
 
   return (
-    <div className={`${base} ${colors}`}>
-      <span>{type === 'success' ? '✓' : '✕'}</span>
+    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium animate-slide-up ${isSuccess ? 'bg-emerald-600' : 'bg-red-600'}`}>
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isSuccess ? 'bg-white/20' : 'bg-white/20'}`}>
+        {isSuccess ? (
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        )}
+      </div>
       <span>{message}</span>
-      <button onClick={onClose} className="ml-2 opacity-70 hover:opacity-100 text-lg leading-none">×</button>
+      <button onClick={onClose} className="ml-1 opacity-70 hover:opacity-100 transition-opacity">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
   );
 }

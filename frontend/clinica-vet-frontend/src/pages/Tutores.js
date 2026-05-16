@@ -4,38 +4,40 @@ import API from '../api';
 
 const PAGE_SIZE = 10;
 
+const EMPTY = { nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' };
+
 export default function Tutores() {
   const { search } = useLocation();
   const [tutores, setTutores] = useState([]);
-  const [form, setForm] = useState({ nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' });
+  const [form, setForm] = useState(EMPTY);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [pagina, setPagina] = useState(1);
+  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     API.get('/tutores').then(r => setTutores(r.data));
-    if (new URLSearchParams(search).get('new') === 'true') {
-      setMostrarForm(true);
-    }
+    if (new URLSearchParams(search).get('new') === 'true') setMostrarForm(true);
   }, [search]);
 
-  // Reset page when search changes
-  useEffect(() => {
-    setPagina(1);
-  }, [busqueda]);
+  useEffect(() => { setPagina(1); }, [busqueda]);
 
   const guardar = async () => {
+    if (!form.nombre.trim()) return;
+    setGuardando(true);
     try {
       await API.post('/tutores', form);
-      setForm({ nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' });
+      setForm(EMPTY);
       setMostrarForm(false);
       API.get('/tutores').then(r => setTutores(r.data));
-    } catch (error) {
-      console.error('Error al guardar tutor:', error);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setGuardando(false);
     }
   };
 
-  const tutoresFiltrados = tutores.filter(t => {
+  const filtrados = tutores.filter(t => {
     const q = busqueda.toLowerCase();
     return (
       t.nombre?.toLowerCase().includes(q) ||
@@ -47,65 +49,120 @@ export default function Tutores() {
     );
   });
 
-  const totalPaginas = Math.max(1, Math.ceil(tutoresFiltrados.length / PAGE_SIZE));
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
   const paginaActual = Math.min(pagina, totalPaginas);
-  const tutoresPagina = tutoresFiltrados.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
+  const pagina_items = filtrados.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
+
+  const campos = [
+    { key: 'nombre', label: 'Nombre *', placeholder: 'Nombre' },
+    { key: 'apellidos', label: 'Apellidos', placeholder: 'Apellidos' },
+    { key: 'telefono', label: 'Teléfono', placeholder: '555-000-0000' },
+    { key: 'whatsapp', label: 'WhatsApp', placeholder: '555-000-0000' },
+    { key: 'correo', label: 'Correo', placeholder: 'correo@ejemplo.com' },
+    { key: 'direccion', label: 'Dirección', placeholder: 'Calle, colonia, ciudad' },
+  ];
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Tutores</h2>
-        <button onClick={() => setMostrarForm(!mostrarForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-          + Nuevo tutor
+    <div className="animate-fade-in">
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Tutores</h1>
+          <p className="page-subtitle">{tutores.length} propietario{tutores.length !== 1 ? 's' : ''} registrado{tutores.length !== 1 ? 's' : ''}</p>
+        </div>
+        <button
+          onClick={() => { setMostrarForm(!mostrarForm); setForm(EMPTY); }}
+          className="btn-primary"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo tutor
         </button>
       </div>
 
+      {/* Form */}
       {mostrarForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-5 mb-6 grid grid-cols-2 gap-4">
-          {['nombre','apellidos','telefono','whatsapp','correo','direccion'].map(f => (
-            <input key={f} placeholder={f.charAt(0).toUpperCase() + f.slice(1)}
-              value={form[f]} onChange={e => setForm({...form, [f]: e.target.value})}
-              className="border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300" />
-          ))}
-          <button onClick={guardar}
-            className="col-span-2 bg-green-500 text-white py-2 rounded-lg text-sm hover:bg-green-600">
-            Guardar
-          </button>
+        <div className="form-section animate-slide-up">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-slate-800 dark:text-slate-200">Registrar tutor</h2>
+            <button onClick={() => setMostrarForm(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {campos.map(c => (
+              <div key={c.key}>
+                <label className="input-label">{c.label}</label>
+                <input
+                  placeholder={c.placeholder}
+                  value={form[c.key]}
+                  onChange={e => setForm({ ...form, [c.key]: e.target.value })}
+                  className="input"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-3 mt-5">
+            <button onClick={guardar} disabled={guardando || !form.nombre.trim()} className="btn-success disabled:opacity-50">
+              {guardando ? 'Guardando...' : 'Guardar tutor'}
+            </button>
+            <button onClick={() => setMostrarForm(false)} className="btn-secondary">Cancelar</button>
+          </div>
         </div>
       )}
 
-      {/* Search input */}
-      <div className="mb-4">
+      {/* Search */}
+      <div className="relative mb-4">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
         <input
           type="text"
-          placeholder="Buscar por nombre, apellidos, teléfono, correo o dirección..."
+          placeholder="Buscar por nombre, teléfono, correo..."
           value={busqueda}
           onChange={e => setBusqueda(e.target.value)}
-          className="w-full border rounded-lg px-4 py-2 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="input pl-9"
         />
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow overflow-hidden">
+      {/* Table */}
+      <div className="table-wrapper">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 uppercase text-xs">
-            <tr>{['Código','Nombre','Teléfono','WhatsApp','Correo','Dirección'].map(h => (
-              <th key={h} className="px-4 py-3 text-left">{h}</th>
-            ))}</tr>
+          <thead className="table-head">
+            <tr>
+              {['Código', 'Nombre', 'Teléfono', 'WhatsApp', 'Correo', 'Dirección'].map(h => (
+                <th key={h} className="px-4 py-3 text-left">{h}</th>
+              ))}
+            </tr>
           </thead>
           <tbody>
-            {tutoresPagina.map(t => (
-              <tr key={t.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200">
-                <td className="px-4 py-3 font-medium">{t.codigo || '—'}</td>
-                <td className="px-4 py-3 font-medium">{t.nombre} {t.apellidos}</td>
-                <td className="px-4 py-3">{t.telefono}</td>
-                <td className="px-4 py-3">{t.whatsapp || '—'}</td>
-                <td className="px-4 py-3">{t.correo}</td>
-                <td className="px-4 py-3">{t.direccion}</td>
+            {pagina_items.map(t => (
+              <tr key={t.id} className="table-row">
+                <td className="table-cell">
+                  <span className="badge-blue">{t.codigo || '—'}</span>
+                </td>
+                <td className="table-cell font-semibold text-slate-800 dark:text-slate-200">{t.nombre} {t.apellidos}</td>
+                <td className="table-cell">{t.telefono || '—'}</td>
+                <td className="table-cell">{t.whatsapp || '—'}</td>
+                <td className="table-cell">{t.correo || '—'}</td>
+                <td className="table-cell text-slate-500 dark:text-slate-400">{t.direccion || '—'}</td>
               </tr>
             ))}
-            {tutoresPagina.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">Sin tutores registrados</td></tr>
+            {pagina_items.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center">
+                  <div className="text-slate-400 dark:text-slate-500">
+                    <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p className="text-sm font-medium">Sin tutores registrados</p>
+                    {busqueda && <p className="text-xs mt-1">Intenta con otra búsqueda</p>}
+                  </div>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -114,30 +171,15 @@ export default function Tutores() {
       {/* Pagination */}
       {totalPaginas > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            Página {paginaActual} de {totalPaginas} &mdash; {tutoresFiltrados.length} resultado{tutoresFiltrados.length !== 1 ? 's' : ''}
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            Página {paginaActual} de {totalPaginas} · {filtrados.length} resultado{filtrados.length !== 1 ? 's' : ''}
           </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPagina(p => Math.max(1, p - 1))}
-              disabled={paginaActual === 1}
-              className="px-3 py-1 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-              ← Anterior
-            </button>
+          <div className="flex gap-1.5">
+            <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaActual === 1} className="page-btn">←</button>
             {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(n => (
-              <button
-                key={n}
-                onClick={() => setPagina(n)}
-                className={`px-3 py-1 rounded-lg border text-sm dark:border-gray-600 ${n === paginaActual ? 'bg-blue-600 text-white border-blue-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200'}`}>
-                {n}
-              </button>
+              <button key={n} onClick={() => setPagina(n)} className={n === paginaActual ? 'page-btn-active' : 'page-btn'}>{n}</button>
             ))}
-            <button
-              onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
-              disabled={paginaActual === totalPaginas}
-              className="px-3 py-1 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-              Siguiente →
-            </button>
+            <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas} className="page-btn">→</button>
           </div>
         </div>
       )}
