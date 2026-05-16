@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import API from '../api';
-import { downloadFile, openPDFInNewWindow, printPDF } from '../utils/pdfGenerator';
+import { openPDFInNewWindow, printPDF } from '../utils/pdfGenerator';
 
 /**
  * Componente para generar y descargar reportes PDF
@@ -36,6 +36,7 @@ export default function PDFReportButton({
         document.body.appendChild(link);
         link.click();
         link.parentElement.removeChild(link);
+        window.URL.revokeObjectURL(url);
       } else if (action === 'preview') {
         openPDFInNewWindow(blob);
       } else if (action === 'print') {

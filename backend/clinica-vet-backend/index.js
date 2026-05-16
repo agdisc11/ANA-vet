@@ -18,23 +18,20 @@ app.use('/api/vacunas', require('./src/routes/vacunas'));
 app.use('/api/reports', require('./src/routes/reports'));
 
 app.get('/api/stats', (req, res) => {
-  const queries = {
-    tutores: 'SELECT COUNT(*) as total FROM tutor',
-    pacientes: 'SELECT COUNT(*) as total FROM paciente',
-    consultas: 'SELECT COUNT(*) as total FROM consulta',
-    hospitalizaciones: 'SELECT COUNT(*) as total FROM hospitalizacion',
-    cirugias: 'SELECT COUNT(*) as total FROM cirugia',
-    vacunas: 'SELECT COUNT(*) as total FROM vacuna',
-  };
-  const results = {};
-  let pending = Object.keys(queries).length;
-  for (const [key, sql] of Object.entries(queries)) {
-    db.query(sql, (err, rows) => {
-      results[key] = err ? 0 : rows[0].total;
-      if (--pending === 0) res.json(results);
-    });
-  }
+  const sql = `
+    SELECT
+      (SELECT COUNT(*) FROM tutor) AS tutores,
+      (SELECT COUNT(*) FROM paciente) AS pacientes,
+      (SELECT COUNT(*) FROM consulta) AS consultas,
+      (SELECT COUNT(*) FROM hospitalizacion) AS hospitalizaciones,
+      (SELECT COUNT(*) FROM cirugia) AS cirugias,
+      (SELECT COUNT(*) FROM vacuna) AS vacunas
+  `;
+  db.query(sql, (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows[0]);
+  });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));

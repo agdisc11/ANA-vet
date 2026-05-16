@@ -4,7 +4,10 @@ const db = require('../db/connection');
 
 router.get('/all', (req, res) => {
   db.query(
-    `SELECT c.*, a.protocolo, a.farmacos, a.dosis, a.observaciones, e.paciente_id, p.nombre AS paciente_nombre, t.nombre AS tutor_nombre, t.apellidos AS tutor_apellidos
+    `SELECT c.id, c.fecha, c.procedimiento, c.notas, c.consentimiento,
+            a.protocolo, a.farmacos, a.dosis, a.observaciones,
+            e.paciente_id, p.nombre AS paciente_nombre,
+            t.nombre AS tutor_nombre, t.apellidos AS tutor_apellidos
      FROM cirugia c
      LEFT JOIN anestesia a ON c.id = a.cirugia_id
      JOIN expediente e ON c.expediente_id = e.id
@@ -20,7 +23,8 @@ router.get('/all', (req, res) => {
 
 router.get('/:expediente_id', (req, res) => {
   db.query(
-    `SELECT c.*, a.protocolo, a.farmacos, a.dosis, a.observaciones
+    `SELECT c.id, c.fecha, c.procedimiento, c.plan_quirurgico, c.notas, c.consentimiento,
+            a.protocolo, a.farmacos, a.dosis, a.observaciones
      FROM cirugia c
      LEFT JOIN anestesia a ON c.id = a.cirugia_id
      WHERE c.expediente_id = ?

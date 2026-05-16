@@ -16,7 +16,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    API.get('/stats').then(r => setStats(r.data));
+    API.get('/stats').then(r => setStats(r.data)).catch(() => {});
   }, []);
 
   const total = Object.values(stats).reduce((a, b) => (typeof b === 'number' ? a + b : a), 0);

@@ -1,13 +1,5 @@
 const PDFDocument = require('pdfkit');
 const db = require('../db/connection');
-const path = require('path');
-const fs = require('fs');
-
-// Crear directorio de reportes si no existe
-const reportsDir = path.join(__dirname, '../../reports');
-if (!fs.existsSync(reportsDir)) {
-  fs.mkdirSync(reportsDir, { recursive: true });
-}
 
 // Función auxiliar para crear encabezado PDF
 const addHeader = (doc, title) => {
@@ -56,7 +48,9 @@ const addTable = (doc, columns, rows, options = {}) => {
 // Reporte de Pacientes
 exports.reportePacientes = (req, res) => {
   const query = `
-    SELECT p.id, p.nombre, p.especie, p.raza, p.edad, p.peso, t.nombre as tutor_nombre, t.telefono
+    SELECT p.id, p.nombre, p.especie, p.raza,
+           TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS edad,
+           t.nombre as tutor_nombre, t.telefono
     FROM paciente p
     LEFT JOIN tutor t ON p.tutor_id = t.id
     ORDER BY p.nombre
@@ -69,7 +63,6 @@ exports.reportePacientes = (req, res) => {
 
     const doc = new PDFDocument();
     const filename = `reporte_pacientes_${Date.now()}.pdf`;
-    const filepath = path.join(reportsDir, filename);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -81,19 +74,18 @@ exports.reportePacientes = (req, res) => {
     doc.fontSize(11).text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 50, doc.y);
     doc.moveDown(1);
 
-    const columns = ['Nombre', 'Especie', 'Raza', 'Edad', 'Peso', 'Tutor', 'Teléfono'];
+    const columns = ['Nombre', 'Especie', 'Raza', 'Edad', 'Tutor', 'Teléfono'];
     const dataRows = rows.map(row => [
       row.nombre,
       row.especie || '-',
       row.raza || '-',
-      row.edad || '-',
-      `${row.peso || '-'} kg`,
+      row.edad != null ? `${row.edad} años` : '-',
       row.tutor_nombre || '-',
       row.telefono || '-'
     ]);
 
     addTable(doc, columns, dataRows, {
-      columnWidths: [80, 60, 60, 40, 50, 90, 80]
+      columnWidths: [90, 70, 70, 50, 110, 90]
     });
 
     doc.fontSize(10).text(`\nTotal de pacientes: ${rows.length}`, 50);
@@ -104,7 +96,7 @@ exports.reportePacientes = (req, res) => {
 // Reporte de Hospitalizaciones
 exports.reporteHospitalizaciones = (req, res) => {
   const query = `
-    SELECT h.id, h.fecha_ingreso, h.fecha_salida, h.diagnostico, h.observaciones,
+    SELECT h.id, h.fecha_ingreso, h.tipo_alta, h.historia_clinica,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
     FROM hospitalizacion h
     LEFT JOIN expediente e ON h.expediente_id = e.id
@@ -132,27 +124,16 @@ exports.reporteHospitalizaciones = (req, res) => {
     doc.fontSize(11).text(`Fecha del reporte: ${new Date().toLocaleDateString('es-ES')}`, 50, doc.y);
     doc.moveDown(1);
 
-    const columns = ['Paciente', 'Tutor', 'Fecha Ingreso', 'Fecha Salida', 'Diagnóstico'];
+    const columns = ['Paciente', 'Tutor', 'Fecha Ingreso', 'Tipo Alta'];
     const dataRows = rows.map(row => [
-      row.paciente_nombre,
+      row.paciente_nombre || '-',
       row.tutor_nombre || '-',
-      row.fecha_ingreso ? row.fecha_ingreso.split('T')[0] : '-',
-      row.fecha_salida ? row.fecha_salida.split('T')[0] : '-',
-      row.diagnostico || '-'
+      row.fecha_ingreso instanceof Date ? row.fecha_ingreso.toISOString().split('T')[0] : (row.fecha_ingreso || '-'),
+      row.tipo_alta || 'Activo'
     ]);
 
     addTable(doc, columns, dataRows, {
-      columnWidths: [100, 100, 90, 90, 100]
-    });
-
-    // Detalles
-    doc.moveDown(1);
-    doc.fontSize(10).font('Helvetica-Bold').text('OBSERVACIONES:');
-    doc.font('Helvetica').fontSize(9);
-    rows.forEach(row => {
-      if (row.observaciones) {
-        doc.text(`• ${row.paciente_nombre}: ${row.observaciones}`);
-      }
+      columnWidths: [130, 130, 110, 110]
     });
 
     doc.fontSize(10).text(`\nTotal de hospitalizaciones registradas: ${rows.length}`, 50);
@@ -163,7 +144,7 @@ exports.reporteHospitalizaciones = (req, res) => {
 // Reporte de Cirugías
 exports.reporteCirugias = (req, res) => {
   const query = `
-    SELECT c.id, c.fecha, c.tipo_cirugia, c.duracion, c.observaciones,
+    SELECT c.id, c.fecha, c.procedimiento, c.notas,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
     FROM cirugia c
     LEFT JOIN expediente e ON c.expediente_id = e.id
@@ -191,27 +172,16 @@ exports.reporteCirugias = (req, res) => {
     doc.fontSize(11).text(`Fecha del reporte: ${new Date().toLocaleDateString('es-ES')}`, 50, doc.y);
     doc.moveDown(1);
 
-    const columns = ['Paciente', 'Tutor', 'Fecha', 'Tipo de Cirugía', 'Duración'];
+    const columns = ['Paciente', 'Tutor', 'Fecha', 'Procedimiento'];
     const dataRows = rows.map(row => [
-      row.paciente_nombre,
+      row.paciente_nombre || '-',
       row.tutor_nombre || '-',
-      row.fecha ? row.fecha.split('T')[0] : '-',
-      row.tipo_cirugia || '-',
-      `${row.duracion || '-'} min`
+      row.fecha instanceof Date ? row.fecha.toISOString().split('T')[0] : (row.fecha || '-'),
+      row.procedimiento || '-'
     ]);
 
     addTable(doc, columns, dataRows, {
-      columnWidths: [100, 100, 80, 100, 80]
-    });
-
-    // Observaciones
-    doc.moveDown(1);
-    doc.fontSize(10).font('Helvetica-Bold').text('OBSERVACIONES Y DETALLES:');
-    doc.font('Helvetica').fontSize(9);
-    rows.forEach(row => {
-      if (row.observaciones) {
-        doc.text(`• ${row.paciente_nombre}: ${row.observaciones}`);
-      }
+      columnWidths: [120, 120, 90, 150]
     });
 
     doc.fontSize(10).text(`\nTotal de cirugías registradas: ${rows.length}`, 50);
@@ -222,7 +192,7 @@ exports.reporteCirugias = (req, res) => {
 // Reporte de Consultas
 exports.reporteConsultas = (req, res) => {
   const query = `
-    SELECT c.id, c.fecha, c.motivo, c.diagnostico, c.tratamiento,
+    SELECT c.id, c.fecha, c.motivo, c.dx_definitivo, c.dx_presuntivo,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
     FROM consulta c
     LEFT JOIN expediente e ON c.expediente_id = e.id
@@ -252,15 +222,15 @@ exports.reporteConsultas = (req, res) => {
 
     const columns = ['Paciente', 'Tutor', 'Fecha', 'Motivo', 'Diagnóstico'];
     const dataRows = rows.map(row => [
-      row.paciente_nombre,
+      row.paciente_nombre || '-',
       row.tutor_nombre || '-',
-      row.fecha ? row.fecha.split('T')[0] : '-',
+      row.fecha instanceof Date ? row.fecha.toISOString().split('T')[0] : (row.fecha || '-'),
       row.motivo || '-',
-      row.diagnostico || '-'
+      row.dx_definitivo || row.dx_presuntivo || '-'
     ]);
 
     addTable(doc, columns, dataRows, {
-      columnWidths: [80, 90, 70, 90, 100]
+      columnWidths: [90, 100, 70, 100, 120]
     });
 
     doc.fontSize(10).text(`\nTotal de consultas registradas: ${rows.length}`, 50);
@@ -271,12 +241,12 @@ exports.reporteConsultas = (req, res) => {
 // Reporte de Vacunas
 exports.reporteVacunas = (req, res) => {
   const query = `
-    SELECT v.id, v.fecha, v.nombre_vacuna, v.proxima_dosis,
+    SELECT v.id, v.fecha_aplicacion, v.nombre, v.proxima_dosis,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
     FROM vacuna v
     LEFT JOIN paciente p ON v.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
-    ORDER BY v.fecha DESC
+    ORDER BY v.fecha_aplicacion DESC
     LIMIT 50
   `;
 
@@ -298,17 +268,17 @@ exports.reporteVacunas = (req, res) => {
     doc.fontSize(11).text(`Fecha del reporte: ${new Date().toLocaleDateString('es-ES')}`, 50, doc.y);
     doc.moveDown(1);
 
-    const columns = ['Paciente', 'Tutor', 'Fecha', 'Vacuna', 'Próxima Dosis'];
+    const columns = ['Paciente', 'Tutor', 'Fecha Aplicación', 'Vacuna', 'Próxima Dosis'];
     const dataRows = rows.map(row => [
-      row.paciente_nombre,
+      row.paciente_nombre || '-',
       row.tutor_nombre || '-',
-      row.fecha ? row.fecha.split('T')[0] : '-',
-      row.nombre_vacuna || '-',
-      row.proxima_dosis ? row.proxima_dosis.split('T')[0] : '-'
+      row.fecha_aplicacion instanceof Date ? row.fecha_aplicacion.toISOString().split('T')[0] : (row.fecha_aplicacion || '-'),
+      row.nombre || '-',
+      row.proxima_dosis instanceof Date ? row.proxima_dosis.toISOString().split('T')[0] : (row.proxima_dosis || '-')
     ]);
 
     addTable(doc, columns, dataRows, {
-      columnWidths: [100, 100, 80, 90, 90]
+      columnWidths: [100, 100, 90, 100, 90]
     });
 
     doc.fontSize(10).text(`\nTotal de vacunas registradas: ${rows.length}`, 50);
@@ -318,26 +288,19 @@ exports.reporteVacunas = (req, res) => {
 
 // Reporte General Responsivo (Resumen Ejecutivo)
 exports.reporteGeneral = (req, res) => {
-  const queries = {
-    pacientes: 'SELECT COUNT(*) as total FROM paciente',
-    hospitalizaciones: 'SELECT COUNT(*) as total FROM hospitalizacion',
-    cirugias: 'SELECT COUNT(*) as total FROM cirugia',
-    consultas: 'SELECT COUNT(*) as total FROM consulta',
-    vacunas: 'SELECT COUNT(*) as total FROM vacuna',
-    tutores: 'SELECT COUNT(*) as total FROM tutor'
-  };
-
-  const stats = {};
-  let pending = Object.keys(queries).length;
-
-  for (const [key, sql] of Object.entries(queries)) {
-    db.query(sql, (err, rows) => {
-      stats[key] = err ? 0 : rows[0].total;
-      if (--pending === 0) {
-        generateGeneralReport(res, stats);
-      }
-    });
-  }
+  const sql = `
+    SELECT
+      (SELECT COUNT(*) FROM paciente) AS pacientes,
+      (SELECT COUNT(*) FROM hospitalizacion) AS hospitalizaciones,
+      (SELECT COUNT(*) FROM cirugia) AS cirugias,
+      (SELECT COUNT(*) FROM consulta) AS consultas,
+      (SELECT COUNT(*) FROM vacuna) AS vacunas,
+      (SELECT COUNT(*) FROM tutor) AS tutores
+  `;
+  db.query(sql, (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    generateGeneralReport(res, rows[0]);
+  });
 };
 
 const generateGeneralReport = (res, stats) => {
@@ -386,13 +349,16 @@ exports.reporteExpediente = (req, res) => {
   const { paciente_id } = req.params;
 
   const query = `
-    SELECT p.id, p.nombre, p.especie, p.raza, p.edad, p.peso, p.sexo,
+    SELECT p.id, p.nombre, p.especie, p.raza,
+           TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS edad,
+           p.sexo, p.tatuaje, p.microchip,
            t.nombre as tutor_nombre, t.telefono, t.direccion,
-           e.fecha_registro, e.historial_medico, e.alergias
+           e.fecha_apertura
     FROM expediente e
     LEFT JOIN paciente p ON e.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
     WHERE p.id = ?
+    LIMIT 1
   `;
 
   db.query(query, [paciente_id], (err, rows) => {
@@ -416,9 +382,10 @@ exports.reporteExpediente = (req, res) => {
     doc.text(`Nombre: ${data.nombre}`);
     doc.text(`Especie: ${data.especie || '-'}`);
     doc.text(`Raza: ${data.raza || '-'}`);
-    doc.text(`Edad: ${data.edad || '-'}`);
-    doc.text(`Peso: ${data.peso ? data.peso + ' kg' : '-'}`);
+    doc.text(`Edad: ${data.edad != null ? data.edad + ' años' : '-'}`);
     doc.text(`Sexo: ${data.sexo || '-'}`);
+    if (data.tatuaje) doc.text(`Tatuaje: ${data.tatuaje}`);
+    if (data.microchip) doc.text(`Microchip: ${data.microchip}`);
 
     doc.moveDown(1);
     doc.fontSize(11).font('Helvetica-Bold').text('INFORMACIÓN DEL TUTOR:');
@@ -426,16 +393,6 @@ exports.reporteExpediente = (req, res) => {
     doc.text(`Nombre: ${data.tutor_nombre || '-'}`);
     doc.text(`Teléfono: ${data.telefono || '-'}`);
     doc.text(`Dirección: ${data.direccion || '-'}`);
-
-    doc.moveDown(1);
-    doc.fontSize(11).font('Helvetica-Bold').text('HISTORIAL MÉDICO:');
-    doc.fontSize(10).font('Helvetica');
-    doc.text(data.historial_medico || 'Sin información registrada', { align: 'left' });
-
-    doc.moveDown(1);
-    doc.fontSize(11).font('Helvetica-Bold').text('ALERGIAS:');
-    doc.fontSize(10).font('Helvetica');
-    doc.text(data.alergias || 'Sin alergias registradas');
 
     doc.moveDown(2);
     doc.fontSize(9).text(`Expediente generado: ${new Date().toLocaleDateString('es-ES')}`, { align: 'right' });

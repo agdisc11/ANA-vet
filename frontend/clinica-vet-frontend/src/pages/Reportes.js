@@ -16,18 +16,15 @@ export default function Reportes() {
   const generarPDF = async (tipo) => {
     try {
       setGenerando(tipo);
-      const response = await API.get(`/reports/${tipo}`, {
-        responseType: 'blob'
-      });
-      
-      // Crear un blob y descargar
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const response = await API.get(`/reports/${tipo}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `reporte_${tipo}_${Date.now()}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.parentElement.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error al generar PDF:', error);
       alert('Error al generar el reporte PDF');

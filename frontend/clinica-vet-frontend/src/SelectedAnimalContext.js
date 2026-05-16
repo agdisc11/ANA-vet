@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useState } from 'react';
 
 const SelectedAnimalContext = createContext();
 
-const speciesColorMap = {
+export const speciesColorMap = {
   perro: '#B7791F',
   gato: '#4A5568',
   conejo: '#9F7AEA',
@@ -13,7 +13,7 @@ const speciesColorMap = {
   default: '#4B5563',
 };
 
-const breedColorMap = {
+export const breedColorMap = {
   labrador: '#D69E2E',
   'pastor alemán': '#A05622',
   'golden retriever': '#E9A34C',

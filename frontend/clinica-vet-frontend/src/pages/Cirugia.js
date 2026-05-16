@@ -50,19 +50,7 @@ export default function Cirugia() {
   const closeToast = useCallback(() => setToast({ message: '', type: 'success' }), []);
 
   const fetchCirugias = useCallback(() => {
-    API.get(`/cirugias/${expedienteId}`).then(async r => {
-      const cirugiasConAnestesia = await Promise.all(
-        r.data.map(async c => {
-          try {
-            const anRes = await API.get(`/anestesia/${c.id}`);
-            return { ...c, anestesia: anRes.data };
-          } catch {
-            return { ...c, anestesia: null };
-          }
-        })
-      );
-      setCirugias(cirugiasConAnestesia);
-    });
+    API.get(`/cirugias/${expedienteId}`).then(r => setCirugias(r.data));
   }, [expedienteId]);
 
   useEffect(() => { fetchCirugias(); }, [fetchCirugias]);
@@ -155,14 +143,14 @@ export default function Cirugia() {
               {c.notas && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Notas: </span>{c.notas}</div>}
               {c.consentimiento && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Consentimiento: </span>{c.consentimiento}</div>}
             </div>
-            {c.anestesia && (
+            {(c.protocolo || c.farmacos || c.dosis || c.observaciones) && (
               <div className="mt-4 border-t dark:border-gray-700 pt-3">
                 <p className="text-xs font-semibold uppercase text-indigo-500 dark:text-indigo-400 mb-2">Protocolo anestésico</p>
                 <div className="grid grid-cols-2 gap-3 text-sm dark:text-gray-200">
-                  {c.anestesia.protocolo && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Protocolo: </span>{c.anestesia.protocolo}</div>}
-                  {c.anestesia.farmacos && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Fármacos: </span>{c.anestesia.farmacos}</div>}
-                  {c.anestesia.dosis && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Dosis: </span>{c.anestesia.dosis}</div>}
-                  {c.anestesia.observaciones && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Observaciones: </span>{c.anestesia.observaciones}</div>}
+                  {c.protocolo && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Protocolo: </span>{c.protocolo}</div>}
+                  {c.farmacos && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Fármacos: </span>{c.farmacos}</div>}
+                  {c.dosis && <div><span className="font-semibold text-gray-600 dark:text-gray-400">Dosis: </span>{c.dosis}</div>}
+                  {c.observaciones && <div className="col-span-2"><span className="font-semibold text-gray-600 dark:text-gray-400">Observaciones: </span>{c.observaciones}</div>}
                 </div>
               </div>
             )}

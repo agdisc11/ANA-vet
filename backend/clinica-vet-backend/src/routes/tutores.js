@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../db/connection');
 
 router.get('/', (req, res) => {
-  db.query('SELECT * FROM tutor', (err, results) => {
+  db.query('SELECT id, nombre, apellidos, telefono, whatsapp, correo, direccion, codigo FROM tutor ORDER BY nombre', (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(results);
   });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import API from '../api';
+import { breedColorMap as razaColors, speciesColorMap as especieColors } from '../SelectedAnimalContext';
 
 const especieOptions = [
   { value: '', label: 'Seleccionar especie' },
@@ -21,53 +22,6 @@ const razaOptions = {
   Caballo: ['Pura Sangre', 'Andaluz', 'Cuarto de Milla', 'Criollo', 'Frisón', 'Otro'],
 };
 
-const especieColors = {
-  Perro: '#B7791F',
-  Gato: '#4A5568',
-  Conejo: '#9F7AEA',
-  Ave: '#319795',
-  Reptil: '#2F855A',
-  Caballo: '#D69E2E',
-};
-
-const razaColors = {
-  labrador: '#D69E2E',
-  'pastor alemán': '#A05622',
-  'golden retriever': '#E9A34C',
-  beagle: '#DD6B20',
-  rottweiler: '#9B2C2C',
-  'bulldog francés': '#F6AD55',
-  chihuahua: '#F6E05E',
-  'shih tzu': '#B794F4',
-  siames: '#4A5568',
-  persa: '#718096',
-  'maine coon': '#6B46C1',
-  sphynx: '#A0AEC0',
-  bengalí: '#ED8936',
-  abisinio: '#C05621',
-  ragdoll: '#63B3ED',
-  angora: '#F687B3',
-  neozelandés: '#9F7AEA',
-  'mini lop': '#F56565',
-  belier: '#68D391',
-  holandés: '#2B6CB0',
-  periquito: '#48BB78',
-  canario: '#F6E05E',
-  cacatúa: '#D69E2E',
-  loro: '#38B2AC',
-  agapornis: '#2F855A',
-  iguana: '#2F855A',
-  serpiente: '#718096',
-  tortuga: '#2C7A7B',
-  camaleón: '#38A169',
-  gecko: '#68D391',
-  'pura sangre': '#C05621',
-  andaluz: '#805AD5',
-  'cuarto de milla': '#D69E2E',
-  criollo: '#CC7722',
-  frisón: '#2D3748',
-};
-
 function stringToColor(value) {
   const str = value?.trim().toLowerCase() || '';
   let hash = 0;
@@ -79,7 +33,7 @@ function stringToColor(value) {
 }
 
 function getPreviewColor(especie, raza) {
-  if (!raza) return especieColors[especie] || '#4B5563';
+  if (!raza) return especieColors[especie?.toLowerCase()] || '#4B5563';
   const normalized = raza.trim().toLowerCase();
   return razaColors[normalized] || stringToColor(normalized);
 }

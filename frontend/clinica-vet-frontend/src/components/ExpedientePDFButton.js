@@ -10,18 +10,15 @@ export default function ExpedientePDFButton({ pacienteId, pacienteNombre, varian
   const handleGenerarExpediente = async () => {
     try {
       setLoading(true);
-      const response = await API.get(`/reports/expediente/${pacienteId}`, {
-        responseType: 'blob'
-      });
-
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
+      const response = await API.get(`/reports/expediente/${pacienteId}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `expediente_${pacienteNombre}_${Date.now()}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.parentElement.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error generando expediente:', error);
       alert('Error al generar el expediente');
