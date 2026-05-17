@@ -1,8 +1,37 @@
 import { useState, useEffect } from 'react';
 import API from '../../api';
 
+// ─── Matriz de compatibilidad de unidades (v3.0) ──────────────────────────────
+// Define qué unidades de dosis son compatibles con qué unidades de formulación.
+// Si la unidad de dosis NO está en el array de compatibles de la formulación → incompatible.
+const CLINICAL_CONSTANTS = Object.freeze({
+  // Grupos de unidades compatibles entre sí
+  // Clave: unidad de formulación (concentración) → array de unidades de dosis compatibles
+  compatibilidad: {
+    'mg/mL':  ['mg', 'mg/kg'],
+    'mcg/mL': ['mcg', 'mcg/kg', 'μg', 'μg/kg'],
+    'μg/mL':  ['mcg', 'mcg/kg', 'μg', 'μg/kg'],
+    'U/mL':   ['U', 'UI', 'U/kg', 'UI/kg'],
+    'mEq/mL': ['mEq', 'mEq/kg'],
+    'g/mL':   ['g', 'g/kg'],
+    '%':      ['mg', 'mg/kg', 'g', 'g/kg'],
+  },
+  // Unidades de dosis disponibles para selección manual
+  unidadesDosis: ['mg', 'mg/kg', 'mcg', 'mcg/kg', 'μg', 'μg/kg', 'U', 'UI', 'U/kg', 'UI/kg', 'mEq', 'mEq/kg', 'g', 'g/kg'],
+  // Unidades de formulación disponibles
+  unidadesFormulacion: ['mg/mL', 'mcg/mL', 'μg/mL', 'U/mL', 'mEq/mL', 'g/mL', '%'],
+});
+
+// ─── Función de validación de compatibilidad ──────────────────────────────────
+function esCompatible(unidadDosis, unidadFormulacion) {
+  if (!unidadDosis || !unidadFormulacion) return null; // sin datos suficientes
+  const compatibles = CLINICAL_CONSTANTS.compatibilidad[unidadFormulacion];
+  if (!compatibles) return null; // formulación desconocida → no bloquear
+  return compatibles.includes(unidadDosis);
+}
+
 // ─── Sub-componente: Card de resultado ───────────────────────────────────────
-function ResultadoCard({ volumen, medicamento, pesoKg, dosis, concentracion }) {
+function ResultadoCard({ volumen, medicamento, pesoKg, dosis, concentracion, unidadDosis }) {
   return (
     <div className="rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-6">
       <p className="text-xs font-semibold uppercase tracking-widest text-blue-500 dark:text-blue-400 mb-1">
@@ -13,13 +42,39 @@ function ResultadoCard({ volumen, medicamento, pesoKg, dosis, concentracion }) {
         <span className="text-2xl font-semibold ml-2">mL</span>
       </p>
       <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 font-mono">
-        Fórmula: ({pesoKg} kg × {dosis} mg/kg) ÷ {concentracion} mg/mL = {volumen.toFixed(4)} mL
+        Fórmula: ({pesoKg} kg × {dosis} {unidadDosis}) ÷ {concentracion} mg/mL = {volumen.toFixed(4)} mL
       </p>
       {medicamento?.via_administracion && (
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Vía recomendada: <strong>{medicamento.via_administracion}</strong>
         </p>
       )}
+    </div>
+  );
+}
+
+// ─── Sub-componente: Badge de incompatibilidad ────────────────────────────────
+function BadgeIncompatibilidad({ unidadDosis, unidadFormulacion }) {
+  return (
+    <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border-2 border-red-400 dark:border-red-600">
+      <span className="text-red-500 text-xl flex-shrink-0 mt-0.5">🚫</span>
+      <div>
+        <p className="text-sm font-bold text-red-800 dark:text-red-200">
+          Incompatibilidad de unidades detectada
+        </p>
+        <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+          La unidad de dosis <strong className="font-mono bg-red-100 dark:bg-red-900/40 px-1 rounded">{unidadDosis}</strong> no es compatible con la formulación en <strong className="font-mono bg-red-100 dark:bg-red-900/40 px-1 rounded">{unidadFormulacion}</strong>.
+        </p>
+        <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">
+          Verifica las unidades antes de calcular para evitar errores de dosificación.
+        </p>
+        <div className="mt-2 text-xs text-red-700 dark:text-red-300">
+          <span className="font-semibold">Unidades compatibles con {unidadFormulacion}:</span>{' '}
+          <span className="font-mono">
+            {(CLINICAL_CONSTANTS.compatibilidad[unidadFormulacion] || []).join(', ') || 'No definidas'}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -44,6 +99,8 @@ export default function Farmacia({ pesoKg }) {
   const [seleccionado, setSeleccionado] = useState(null);
   const [dosis, setDosis] = useState('');
   const [concentracion, setConcentracion] = useState('');
+  const [unidadDosis, setUnidadDosis] = useState('mg');
+  const [unidadFormulacion, setUnidadFormulacion] = useState('mg/mL');
   const [volumen, setVolumen] = useState(null);
 
   // ── Fetch al montar ────────────────────────────────────────────────────────
@@ -68,11 +125,18 @@ export default function Farmacia({ pesoKg }) {
     setSeleccionado(med);
     setDosis(med ? (med.dosis_mg_por_kg ?? med.dosis_min_mg_kg ?? '') : '');
     setConcentracion(med ? (med.concentracion_mg_ml ?? '') : '');
+    setUnidadDosis('mg');
+    setUnidadFormulacion('mg/mL');
     setVolumen(null);
   }
 
+  // ── Validación de compatibilidad ───────────────────────────────────────────
+  const compatibilidadStatus = esCompatible(unidadDosis, unidadFormulacion);
+  const hayIncompatibilidad = compatibilidadStatus === false;
+
   // ── Calcular volumen ───────────────────────────────────────────────────────
   function calcular() {
+    if (hayIncompatibilidad) return; // bloquear si hay incompatibilidad
     const d = parseFloat(dosis);
     const c = parseFloat(concentracion);
     const p = parseFloat(pesoKg);
@@ -80,8 +144,31 @@ export default function Farmacia({ pesoKg }) {
     setVolumen((p * d) / c);
   }
 
+  // ── Limpiar resultado al cambiar inputs ────────────────────────────────────
+  function handleDosisChange(e) {
+    setDosis(e.target.value);
+    setVolumen(null);
+  }
+
+  function handleConcentracionChange(e) {
+    setConcentracion(e.target.value);
+    setVolumen(null);
+  }
+
+  function handleUnidadDosisChange(e) {
+    setUnidadDosis(e.target.value);
+    setVolumen(null);
+  }
+
+  function handleUnidadFormulacionChange(e) {
+    setUnidadFormulacion(e.target.value);
+    setVolumen(null);
+  }
+
   // ── Agrupar medicamentos por categoría para el <select> ───────────────────
   const categorias = [...new Set(medicamentos.map((m) => m.categoria))].sort();
+
+  const selectCls = 'px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
@@ -136,7 +223,7 @@ export default function Farmacia({ pesoKg }) {
             <select
               onChange={handleSeleccion}
               defaultValue=""
-              className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className={selectCls}
             >
               <option value="" disabled>— Selecciona un medicamento —</option>
               {categorias.map((cat) => (
@@ -153,22 +240,33 @@ export default function Farmacia({ pesoKg }) {
             </select>
           </div>
 
-          {/* Inputs de dosis y concentración */}
+          {/* Inputs de dosis y concentración con unidades */}
           <div className="grid grid-cols-2 gap-4">
+            {/* Dosis + unidad de dosis */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Dosis
-                <span className="ml-1 text-xs font-normal text-slate-400">(mg/kg)</span>
               </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={dosis}
-                onChange={(e) => { setDosis(e.target.value); setVolumen(null); }}
-                placeholder="Ej. 0.2"
-                className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={dosis}
+                  onChange={handleDosisChange}
+                  placeholder="Ej. 0.2"
+                  className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                />
+                <select
+                  value={unidadDosis}
+                  onChange={handleUnidadDosisChange}
+                  className="px-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                >
+                  {CLINICAL_CONSTANTS.unidadesDosis.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
               {seleccionado?.dosis_min_mg_kg && seleccionado?.dosis_max_mg_kg && (
                 <p className="text-xs text-slate-400 dark:text-slate-500">
                   Rango: {seleccionado.dosis_min_mg_kg} – {seleccionado.dosis_max_mg_kg} mg/kg
@@ -176,40 +274,73 @@ export default function Farmacia({ pesoKg }) {
               )}
             </div>
 
+            {/* Concentración + unidad de formulación */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Concentración
-                <span className="ml-1 text-xs font-normal text-slate-400">(mg/mL)</span>
               </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={concentracion}
-                onChange={(e) => { setConcentracion(e.target.value); setVolumen(null); }}
-                placeholder="Ej. 5"
-                className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={concentracion}
+                  onChange={handleConcentracionChange}
+                  placeholder="Ej. 5"
+                  className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                />
+                <select
+                  value={unidadFormulacion}
+                  onChange={handleUnidadFormulacionChange}
+                  className="px-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                >
+                  {CLINICAL_CONSTANTS.unidadesFormulacion.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Botón calcular */}
+          {/* Badge de incompatibilidad de unidades */}
+          {hayIncompatibilidad && dosis && concentracion && (
+            <BadgeIncompatibilidad
+              unidadDosis={unidadDosis}
+              unidadFormulacion={unidadFormulacion}
+            />
+          )}
+
+          {/* Indicador de compatibilidad OK */}
+          {compatibilidadStatus === true && dosis && concentracion && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-xs text-green-700 dark:text-green-300 font-semibold">
+              <span>✅</span>
+              <span>Unidades compatibles: <span className="font-mono">{unidadDosis}</span> con formulación <span className="font-mono">{unidadFormulacion}</span></span>
+            </div>
+          )}
+
+          {/* Botón calcular — bloqueado si hay incompatibilidad */}
           <button
             onClick={calcular}
-            disabled={!pesoKg || !dosis || !concentracion}
-            className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold text-sm transition-all duration-150 shadow-sm"
+            disabled={!pesoKg || !dosis || !concentracion || hayIncompatibilidad}
+            title={hayIncompatibilidad ? 'Corrige la incompatibilidad de unidades antes de calcular' : ''}
+            className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-150 shadow-sm ${
+              hayIncompatibilidad
+                ? 'bg-red-200 dark:bg-red-900/40 text-red-700 dark:text-red-400 cursor-not-allowed border-2 border-red-400 dark:border-red-600'
+                : 'bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white'
+            }`}
           >
-            Calcular volumen
+            {hayIncompatibilidad ? '🚫 Incompatibilidad de unidades — Corrige antes de calcular' : 'Calcular volumen'}
           </button>
 
           {/* Resultado */}
-          {volumen !== null && (
+          {volumen !== null && !hayIncompatibilidad && (
             <ResultadoCard
               volumen={volumen}
               medicamento={seleccionado}
               pesoKg={pesoKg}
               dosis={dosis}
               concentracion={concentracion}
+              unidadDosis={unidadDosis}
             />
           )}
 
@@ -218,7 +349,7 @@ export default function Farmacia({ pesoKg }) {
 
           {/* Fórmula de referencia */}
           <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
-            Fórmula: <span className="font-mono">(Peso kg × Dosis mg/kg) ÷ Concentración mg/mL = Volumen mL</span>
+            Fórmula: <span className="font-mono">(Peso kg × Dosis) ÷ Concentración = Volumen mL</span>
           </p>
         </div>
       )}

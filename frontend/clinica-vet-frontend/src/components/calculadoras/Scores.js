@@ -111,6 +111,88 @@ const SIRS_CRITERIOS = [
   },
 ];
 
+// ─── Datos: CMPS-SF — Escala de Dolor de Glasgow Corta (v3.0) ────────────────
+// 6 secciones obligatorias con radio buttons
+// Umbral de rescate: con fractura ≥6/24, sin fractura ≥5/23
+const CLINICAL_CONSTANTS = Object.freeze({
+  cmps: {
+    secciones: [
+      {
+        id: 'vocalizacion',
+        label: 'A. Vocalización',
+        emoji: '🔊',
+        opciones: [
+          { valor: 0, texto: 'No vocaliza' },
+          { valor: 1, texto: 'Vocaliza solo al tacto/movimiento' },
+          { valor: 2, texto: 'Vocaliza espontáneamente (intermitente)' },
+          { valor: 3, texto: 'Vocaliza espontáneamente (continuo)' },
+        ],
+      },
+      {
+        id: 'atencion_herida',
+        label: 'B. Atención a la herida',
+        emoji: '🩹',
+        opciones: [
+          { valor: 0, texto: 'No presta atención a la herida' },
+          { valor: 1, texto: 'Mira/lame la herida ocasionalmente' },
+          { valor: 2, texto: 'Mira/lame la herida continuamente' },
+          { valor: 3, texto: 'Muerde/rasca la herida' },
+        ],
+      },
+      {
+        id: 'locomocion',
+        label: 'C. Locomoción / Postura (con o sin fractura)',
+        emoji: '🦮',
+        opciones: [
+          { valor: 0, texto: 'Normal' },
+          { valor: 1, texto: 'Cojea levemente / postura levemente anormal' },
+          { valor: 2, texto: 'Cojea marcadamente / postura anormal' },
+          { valor: 3, texto: 'No apoya el miembro / postura muy anormal' },
+        ],
+        esFractura: true, // esta sección determina si hay fractura
+      },
+      {
+        id: 'palpacion',
+        label: 'D. Respuesta a la palpación',
+        emoji: '🤚',
+        opciones: [
+          { valor: 0, texto: 'Sin respuesta' },
+          { valor: 1, texto: 'Respuesta leve (gira la cabeza)' },
+          { valor: 2, texto: 'Respuesta moderada (vocaliza, intenta morder)' },
+          { valor: 3, texto: 'Respuesta intensa (agresividad, huye)' },
+        ],
+      },
+      {
+        id: 'animo',
+        label: 'E. Ánimo / Estado mental',
+        emoji: '🧠',
+        opciones: [
+          { valor: 0, texto: 'Feliz e interesado en el entorno' },
+          { valor: 1, texto: 'Quieto, indiferente al entorno' },
+          { valor: 2, texto: 'Ansioso o angustiado' },
+          { valor: 3, texto: 'Deprimido o sin respuesta' },
+        ],
+      },
+      {
+        id: 'postura',
+        label: 'F. Postura corporal',
+        emoji: '🐕',
+        opciones: [
+          { valor: 0, texto: 'Postura normal, relajado' },
+          { valor: 1, texto: 'Postura levemente tensa' },
+          { valor: 2, texto: 'Postura tensa, rígida' },
+          { valor: 3, texto: 'Postura muy rígida, encogido' },
+        ],
+      },
+    ],
+    // Umbrales de rescate analgésico
+    umbralSinFractura: 5,   // máximo 23 pts
+    umbralConFractura: 6,   // máximo 24 pts
+    maxSinFractura: 23,
+    maxConFractura: 24,
+  },
+});
+
 // ─── Sub-componentes de utilidad ──────────────────────────────────────────────
 function Seccion({ titulo, emoji, children }) {
   return (
@@ -233,9 +315,9 @@ function GlasgowScore() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SelectScore label="Actividad Motora (1–6)" opciones={GLASGOW_MOTOR} valor={motor} onChange={setMotor} />
-      <SelectScore label="Reflejos del Tronco Encefálico (1–6)" opciones={GLASGOW_TRONCO} valor={tronco} onChange={setTronco} />
-      <SelectScore label="Nivel de Conciencia (1–6)" opciones={GLASGOW_CONCIENCIA} valor={conciencia} onChange={setConciencia} />
+      <SelectScore label="Actividad Motora (1–6)" opciones={GLASGOW_MOTOR} valor={motor} onChange={(v) => { setMotor(v); }} />
+      <SelectScore label="Reflejos del Tronco Encefálico (1–6)" opciones={GLASGOW_TRONCO} valor={tronco} onChange={(v) => { setTronco(v); }} />
+      <SelectScore label="Nivel de Conciencia (1–6)" opciones={GLASGOW_CONCIENCIA} valor={conciencia} onChange={(v) => { setConciencia(v); }} />
 
       {/* Resultado */}
       {listo && dx && c && (
@@ -345,6 +427,204 @@ function SIRSScore() {
   );
 }
 
+// ─── CMPS-SF — Escala de Dolor de Glasgow Corta ───────────────────────────────
+function CMPSScore() {
+  // Estado: un valor por sección (null = no seleccionado)
+  const [respuestas, setRespuestas] = useState(
+    Object.fromEntries(CLINICAL_CONSTANTS.cmps.secciones.map((s) => [s.id, null]))
+  );
+  const [hayFractura, setHayFractura] = useState(false);
+
+  function handleRespuesta(seccionId, valor) {
+    setRespuestas((prev) => ({ ...prev, [seccionId]: valor }));
+  }
+
+  // Calcular score total
+  const todasRespondidas = CLINICAL_CONSTANTS.cmps.secciones.every((s) => respuestas[s.id] !== null);
+  const scoreTotal = todasRespondidas
+    ? CLINICAL_CONSTANTS.cmps.secciones.reduce((acc, s) => acc + (respuestas[s.id] ?? 0), 0)
+    : null;
+
+  // Umbrales dinámicos según fractura
+  const umbral = hayFractura
+    ? CLINICAL_CONSTANTS.cmps.umbralConFractura
+    : CLINICAL_CONSTANTS.cmps.umbralSinFractura;
+  const maxScore = hayFractura
+    ? CLINICAL_CONSTANTS.cmps.maxConFractura
+    : CLINICAL_CONSTANTS.cmps.maxSinFractura;
+
+  const requiereRescate = scoreTotal !== null && scoreTotal >= umbral;
+
+  // Limpiar todas las respuestas
+  function resetear() {
+    setRespuestas(Object.fromEntries(CLINICAL_CONSTANTS.cmps.secciones.map((s) => [s.id, null])));
+    setHayFractura(false);
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Toggle de fractura */}
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <button
+          onClick={() => setHayFractura((v) => !v)}
+          className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
+            hayFractura ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-600'
+          }`}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+            hayFractura ? 'translate-x-5' : 'translate-x-0'
+          }`} />
+        </button>
+        <div>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            {hayFractura ? '🦴 Con fractura' : 'Sin fractura'}
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            {hayFractura
+              ? `Máximo: ${CLINICAL_CONSTANTS.cmps.maxConFractura} pts · Umbral de rescate: ≥${CLINICAL_CONSTANTS.cmps.umbralConFractura}`
+              : `Máximo: ${CLINICAL_CONSTANTS.cmps.maxSinFractura} pts · Umbral de rescate: ≥${CLINICAL_CONSTANTS.cmps.umbralSinFractura}`}
+          </p>
+        </div>
+      </div>
+
+      {/* Secciones de evaluación */}
+      <div className="flex flex-col gap-4">
+        {CLINICAL_CONSTANTS.cmps.secciones.map((seccion) => {
+          const valorActual = respuestas[seccion.id];
+          return (
+            <div key={seccion.id} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base">{seccion.emoji}</span>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  {seccion.label}
+                </label>
+                {valorActual !== null && (
+                  <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                    {valorActual} pts
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5 pl-2">
+                {seccion.opciones.map((opcion) => {
+                  const isSelected = valorActual === opcion.valor;
+                  return (
+                    <label
+                      key={opcion.valor}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-all duration-150 ${
+                        isSelected
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={seccion.id}
+                        value={opcion.valor}
+                        checked={isSelected}
+                        onChange={() => handleRespuesta(seccion.id, opcion.valor)}
+                        className="sr-only"
+                      />
+                      {/* Radio visual */}
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-500'
+                          : 'border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                      <span className={`text-xs font-mono font-semibold flex-shrink-0 w-4 ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-400 dark:text-slate-500'}`}>
+                        {opcion.valor}
+                      </span>
+                      <span className={`text-xs ${isSelected ? 'text-blue-800 dark:text-blue-200 font-medium' : 'text-slate-600 dark:text-slate-400'}`}>
+                        {opcion.texto}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Progreso de completado */}
+      {!todasRespondidas && (
+        <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <span>
+            {CLINICAL_CONSTANTS.cmps.secciones.filter((s) => respuestas[s.id] !== null).length} / {CLINICAL_CONSTANTS.cmps.secciones.length} secciones completadas
+          </span>
+          <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              style={{
+                width: `${(CLINICAL_CONSTANTS.cmps.secciones.filter((s) => respuestas[s.id] !== null).length / CLINICAL_CONSTANTS.cmps.secciones.length) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Resultado final */}
+      {todasRespondidas && scoreTotal !== null && (
+        <div className={`rounded-2xl border p-5 flex flex-col gap-3 ${
+          requiereRescate
+            ? 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600'
+            : 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${requiereRescate ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                CMPS-SF — Score Total
+              </p>
+              <p className={`text-5xl font-extrabold leading-none ${requiereRescate ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}`}>
+                {scoreTotal}
+                <span className="text-xl font-semibold ml-2 opacity-70">/ {maxScore}</span>
+              </p>
+            </div>
+            <div className={`text-5xl ${requiereRescate ? 'animate-pulse' : ''}`}>
+              {requiereRescate ? '🚨' : '✅'}
+            </div>
+          </div>
+
+          {requiereRescate ? (
+            <div className="rounded-xl bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700 p-4">
+              <p className="text-sm font-extrabold text-red-800 dark:text-red-200">
+                ⚠️ RESCATE ANALGÉSICO INMEDIATO REQUERIDO
+              </p>
+              <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                Score {scoreTotal} ≥ umbral {umbral} ({hayFractura ? 'con fractura' : 'sin fractura'}).
+                Administrar analgesia de rescate de inmediato y reevaluar en 30 minutos.
+              </p>
+            </div>
+          ) : (
+            <p className={`text-sm font-medium text-green-700 dark:text-green-300`}>
+              Score dentro del rango aceptable. Continuar monitoreo regular del dolor.
+            </p>
+          )}
+
+          <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+            Umbral de rescate: ≥{umbral} pts ({hayFractura ? 'con fractura' : 'sin fractura'}) · Máximo: {maxScore} pts
+          </p>
+        </div>
+      )}
+
+      {/* Botón de reset */}
+      {Object.values(respuestas).some((v) => v !== null) && (
+        <button
+          onClick={resetear}
+          className="w-full py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+        >
+          🔄 Reiniciar evaluación
+        </button>
+      )}
+
+      <p className="text-xs text-slate-400 dark:text-slate-500">
+        CMPS-SF: Composite Measure Pain Scale — Short Form · Fuente: Murrell et al., Vet Anaesth Analg 2008
+      </p>
+    </div>
+  );
+}
+
 // ─── Componente principal: Scores ────────────────────────────────────────────
 export default function Scores() {
   return (
@@ -359,6 +639,10 @@ export default function Scores() {
 
       <Seccion titulo="Pain Score — Escala Colorado (0–4)" emoji="😣">
         <PainScore />
+      </Seccion>
+
+      <Seccion titulo="Escala de Dolor de Glasgow Corta (CMPS-SF)" emoji="🏥">
+        <CMPSScore />
       </Seccion>
 
       <Seccion titulo="Glasgow Coma Score Modificado (Veterinario)" emoji="🧠">

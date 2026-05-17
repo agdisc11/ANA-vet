@@ -31,22 +31,34 @@ Sistema clínico veterinario completo construido con **React + Node.js + MySQL**
 - Generación de PDFs clínicos (consultas, cirugías, hospitalizaciones)
 - Reportes de expediente completo
 
-### 🧮 Calculadoras Clínicas *(Módulo Premium — v2.0)*
+### 🧮 Calculadoras Clínicas *(Módulo Avanzado — v3.0)*
 
-Módulo de herramientas matemáticas clínicas con **10 categorías activas**, peso global del paciente compartido (kg ↔ lb) y diseño oscuro con Tailwind CSS.
+Módulo de soporte para decisiones médicas en tiempo real con **10 categorías diagnósticas activas**, sincronización alométrica centralizada (peso global `pesoKg` compartido entre todos los módulos) y diseño oscuro premium con Tailwind CSS.
 
-| Categoría | Herramientas |
+#### Arquitectura del módulo
+
+| Capa | Implementación |
 |---|---|
-| 💉 **Anestesia** | Flow rates O₂ (Mapleson/Círculo), Clasificación ASA I–V, Consumo de agente volátil (Isoflurano/Sevoflurano) |
-| 🩸 **Blood Gas** | Interpretador ácido-base (pH/pCO₂/HCO₃), Anion Gap, Déficit de bicarbonato |
-| ❤️ **Cardiac** | MAP `(PAS + 2×PAD) ÷ 3`, Presión de pulso con interpretación clínica |
-| 🔄 **Conversiones** | Peso kg↔lb, Temperatura °C↔°F, Líquidos mL/L/oz, Presiones mmHg/kPa/cmH₂O, Tabla de suturas USP↔Métrico |
-| 💧 **Fluidos** | Fluidoterapia con déficit (mL/24h + gtt/min), CRI básico, Osmolalidad sérica, Déficit de agua libre |
-| 🔬 **Hematología** | Cálculo de transfusión (perro/gato), Volumen sanguíneo estimado con umbrales de pérdida |
-| 🥩 **Nutrición** | RER `70×(kg)^0.75`, DER con 23 factores de vida, Cantidad a alimentar en g/día + porciones |
-| 💊 **Farmacia** | Calculadora de dosis con catálogo de medicamentos desde BD, volumen a administrar |
-| ☠️ **Toxicología** | Evaluación de exposición con catálogo de toxinas desde BD, alertas de nivel de riesgo (leve/moderado/letal) |
-| 📊 **Scores** | Pain Score Colorado (0–4), Glasgow Coma Score modificado (veterinario), SIRS (4 criterios) |
+| **Base de datos** | MySQL — tablas `catalogo_medicamentos` y `catalogo_toxicologia` para catálogos dinámicos extensibles sin cambios de código |
+| **API REST** | Node.js/Express — endpoints dedicados en `/api/calculadora/medicamentos` y `/api/calculadora/toxicologia` |
+| **Frontend** | React funcional con Hooks (`useState`, `useEffect`) — consumo asíncrono con `axios` desde puerto 4000 |
+| **Estado global** | Variable `pesoKg` propagada como prop desde el shell maestro `Calculadora.js` a todos los sub-módulos |
+| **Constantes clínicas** | Objetos inmutables `const CLINICAL_CONSTANTS = Object.freeze({...})` al inicio de cada componente |
+
+#### Categorías clínicas
+
+| Categoría | Herramientas | Novedades v3.0 |
+|---|---|---|
+| 💉 **Anestesia** | Flow rates O₂ (Mapleson/Círculo), Clasificación ASA I–V, Consumo de agente volátil (Isoflurano/Sevoflurano) | — |
+| 🩸 **Blood Gas** | Interpretador ácido-base (pH/pCO₂/HCO₃), Anion Gap, Déficit de bicarbonato | — |
+| ❤️ **Cardiac** | MAP `(PAS + 2×PAD) ÷ 3`, Presión de pulso con interpretación clínica | — |
+| 🔄 **Conversiones** | Peso kg↔lb, Temperatura °C↔°F, Líquidos, Presiones, Suturas USP↔Métrico | **Sub-pantalla Convencional ↔ SI** con 20 factores exactos (Hematología, Bioquímica, Endocrino & Fármacos) |
+| 💧 **Fluidos** | Fluidoterapia con déficit, CRI, Osmolalidad sérica, Déficit de agua libre | **Tasa por especie** (Perro 60 mL/kg/día, Gato 45 mL/kg/día) · **Tabla K⁺** (5 rangos séricos) · **Modal de emergencia** con `animate-pulse` si tasa K⁺ > 0.5 mEq/kg/h |
+| 🔬 **Hematología** | Transfusión sanguínea, Volumen sanguíneo estimado | **Sub-pantalla Flebotomía** con K=90 (perro)/70 (gato): `Peso × K × ((PCV actual − PCV deseado) / PCV actual)` · Validación en tiempo real PCV deseado < PCV actual |
+| 🥩 **Nutrición** | RER `70×(kg)^0.75`, DER con 23 factores de vida, Cantidad a alimentar en g/día + porciones | — |
+| 💊 **Farmacia** | Calculadora de dosis con catálogo desde BD, volumen a administrar | **Matriz de compatibilidad de unidades** — bloquea el botón calcular y muestra badge de error si unidad de dosis (ej. `U`) es incompatible con formulación (ej. `mg/mL`) |
+| ☠️ **Toxicología** | Evaluación de exposición con catálogo desde BD, alertas semáforo (leve/moderado/letal) | — |
+| 📊 **Scores** | Pain Score Colorado (0–4), Glasgow Coma Score modificado, SIRS (4 criterios) | **CMPS-SF** (6 secciones con radio buttons: Vocalización, Atención herida, Locomoción, Palpación, Ánimo, Postura) · Umbral dinámico: sin fractura ≥5/23, con fractura ≥6/24 · Alerta roja de rescate analgésico |
 
 ---
 

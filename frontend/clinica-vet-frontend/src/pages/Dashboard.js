@@ -125,16 +125,13 @@ export default function Dashboard() {
             <div className="flex items-center gap-3 mb-2">
               <span className="text-3xl">🧮</span>
               <div>
-                <span className="inline-block px-2.5 py-0.5 bg-white/20 text-white text-xs font-bold rounded-full uppercase tracking-widest mb-1">
-                  Nuevo
-                </span>
                 <h2 className="text-xl font-bold text-white leading-tight">
-                  Calculadoras Clínicas
+                  Módulo Avanzado de Calculadoras Clínicas
                 </h2>
               </div>
             </div>
             <p className="text-blue-100 text-sm leading-relaxed max-w-lg">
-              10 módulos de cálculo clínico veterinario: anestesia, fluidos, blood gas, nutrición, farmacia, toxicología, scores, hematología y más. Con peso global del paciente compartido entre todas las calculadoras.
+              Herramientas de soporte para decisiones médicas en tiempo real con 10 categorías diagnósticas integradas y sincronización alométrica centralizada.
             </p>
             <button
               onClick={() => navigate('/calculadora')}

@@ -17,6 +17,55 @@ const TALLAS_SUTURA = [
   { usp: '6-0', metrico: '0.2', diametro: '0.020 mm', uso: 'Microcirugía, oftalmología' },
 ];
 
+// ─── Factores de conversión Convencional ↔ SI (v2.0) ─────────────────────────
+// Conv → SI = valor * factor
+// SI → Conv = valor / factor
+const CLINICAL_CONSTANTS = Object.freeze({
+  grupos: [
+    {
+      id: 'hematologia',
+      label: 'Hematología',
+      emoji: '🩸',
+      componentes: [
+        { id: 'rbc',       label: 'Eritrocitos (RBC)',    unidConv: '×10⁶/μL',  unidSI: '×10¹²/L',  factor: 1.0    },
+        { id: 'hb',        label: 'Hemoglobina (Hb)',     unidConv: 'g/dL',      unidSI: 'g/L',       factor: 10.0   },
+        { id: 'wbc',       label: 'Leucocitos (WBC)',     unidConv: '×10³/μL',   unidSI: '×10⁹/L',   factor: 1.0    },
+        { id: 'neutro',    label: 'Neutrófilos',          unidConv: '×10³/μL',   unidSI: '×10⁹/L',   factor: 1.0    },
+        { id: 'linfocito', label: 'Linfocitos',           unidConv: '×10³/μL',   unidSI: '×10⁹/L',   factor: 1.0    },
+        { id: 'plaquetas', label: 'Plaquetas',            unidConv: '×10³/μL',   unidSI: '×10⁹/L',   factor: 0.001  },
+        { id: 'prot_tot',  label: 'Proteínas totales',   unidConv: 'g/dL',      unidSI: 'g/L',       factor: 10.0   },
+      ],
+    },
+    {
+      id: 'bioquimica',
+      label: 'Bioquímica',
+      emoji: '🧪',
+      componentes: [
+        { id: 'alt',       label: 'ALT / Fosfatasa Alcalina', unidConv: 'U/L',    unidSI: 'μkat/L',  factor: 0.0167 },
+        { id: 'albumina',  label: 'Albúmina',                 unidConv: 'g/dL',   unidSI: 'g/L',     factor: 10.0   },
+        { id: 'creatinina',label: 'Creatinina',               unidConv: 'mg/dL',  unidSI: 'μmol/L',  factor: 88.4   },
+        { id: 'glucosa',   label: 'Glucosa',                  unidConv: 'mg/dL',  unidSI: 'mmol/L',  factor: 0.0555 },
+        { id: 'bun',       label: 'BUN',                      unidConv: 'mg/dL',  unidSI: 'mmol/L',  factor: 0.357  },
+        { id: 'sodio',     label: 'Sodio (Na⁺)',              unidConv: 'mEq/L',  unidSI: 'mmol/L',  factor: 1.0    },
+        { id: 'potasio',   label: 'Potasio (K⁺)',             unidConv: 'mEq/L',  unidSI: 'mmol/L',  factor: 1.0    },
+        { id: 'cloro',     label: 'Cloro (Cl⁻)',              unidConv: 'mEq/L',  unidSI: 'mmol/L',  factor: 1.0    },
+        { id: 'calcio',    label: 'Calcio (Ca²⁺)',            unidConv: 'mg/dL',  unidSI: 'mmol/L',  factor: 0.250  },
+      ],
+    },
+    {
+      id: 'endocrino',
+      label: 'Endocrino & Fármacos',
+      emoji: '💊',
+      componentes: [
+        { id: 'cortisol',     label: 'Cortisol',       unidConv: 'μg/dL',  unidSI: 'nmol/L',  factor: 27.59 },
+        { id: 't4',           label: 'T4 total',       unidConv: 'μg/dL',  unidSI: 'nmol/L',  factor: 12.87 },
+        { id: 'fenobarbital', label: 'Fenobarbital',   unidConv: 'μg/mL',  unidSI: 'μmol/L',  factor: 4.31  },
+        { id: 'digoxina',     label: 'Digoxina',       unidConv: 'ng/mL',  unidSI: 'nmol/L',  factor: 1.28  },
+      ],
+    },
+  ],
+});
+
 // ─── Sub-componente: Sección con título ──────────────────────────────────────
 function Seccion({ titulo, emoji, children }) {
   return (
@@ -57,7 +106,7 @@ function ConversorBidireccional({ labelA, labelB, unidadA, unidadB, aToB, bToA, 
         <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">{labelA}</label>
         <div className="flex items-center gap-2">
           <input type="number" value={valA} onChange={handleA} placeholder={placeholderA || '0'} className={inputCls} />
-          <span className="text-xs font-mono text-slate-400 dark:text-slate-500 w-10 text-center">{unidadA}</span>
+          <span className="text-xs font-mono text-slate-400 dark:text-slate-500 w-14 text-center">{unidadA}</span>
         </div>
       </div>
       <span className="text-slate-400 dark:text-slate-500 text-lg mt-4">⇄</span>
@@ -65,7 +114,7 @@ function ConversorBidireccional({ labelA, labelB, unidadA, unidadB, aToB, bToA, 
         <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">{labelB}</label>
         <div className="flex items-center gap-2">
           <input type="number" value={valB} onChange={handleB} placeholder={placeholderB || '0'} className={inputCls} />
-          <span className="text-xs font-mono text-slate-400 dark:text-slate-500 w-10 text-center">{unidadB}</span>
+          <span className="text-xs font-mono text-slate-400 dark:text-slate-500 w-14 text-center">{unidadB}</span>
         </div>
       </div>
     </div>
@@ -171,6 +220,195 @@ function TablaSuturas() {
   );
 }
 
+// ─── Sub-componente: Conversor Clínico Convencional ↔ SI ─────────────────────
+function ConversorUnidadesClincias() {
+  const [grupoId, setGrupoId] = useState('');
+  const [compId, setCompId] = useState('');
+  const [valorConv, setValorConv] = useState('');
+  const [valorSI, setValorSI] = useState('');
+  const [direccion, setDireccion] = useState('conv_to_si'); // 'conv_to_si' | 'si_to_conv'
+
+  const grupo = CLINICAL_CONSTANTS.grupos.find((g) => g.id === grupoId) || null;
+  const comp = grupo ? grupo.componentes.find((c) => c.id === compId) || null : null;
+
+  function handleGrupoChange(e) {
+    setGrupoId(e.target.value);
+    setCompId('');
+    setValorConv('');
+    setValorSI('');
+  }
+
+  function handleCompChange(e) {
+    setCompId(e.target.value);
+    setValorConv('');
+    setValorSI('');
+  }
+
+  function handleValorConv(e) {
+    const v = e.target.value;
+    setValorConv(v);
+    setDireccion('conv_to_si');
+    if (comp && v !== '') {
+      const num = parseFloat(v);
+      if (!isNaN(num)) {
+        setValorSI((num * comp.factor).toFixed(6).replace(/\.?0+$/, ''));
+      } else {
+        setValorSI('');
+      }
+    } else {
+      setValorSI('');
+    }
+  }
+
+  function handleValorSI(e) {
+    const v = e.target.value;
+    setValorSI(v);
+    setDireccion('si_to_conv');
+    if (comp && v !== '') {
+      const num = parseFloat(v);
+      if (!isNaN(num)) {
+        setValorConv((num / comp.factor).toFixed(6).replace(/\.?0+$/, ''));
+      } else {
+        setValorConv('');
+      }
+    } else {
+      setValorConv('');
+    }
+  }
+
+  const selectCls = 'w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
+  const inputCls = 'flex-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Selector de grupo */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Grupo analítico</label>
+          <select value={grupoId} onChange={handleGrupoChange} className={selectCls}>
+            <option value="">— Selecciona grupo —</option>
+            {CLINICAL_CONSTANTS.grupos.map((g) => (
+              <option key={g.id} value={g.id}>{g.emoji} {g.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Componente</label>
+          <select value={compId} onChange={handleCompChange} disabled={!grupo} className={selectCls}>
+            <option value="">— Selecciona componente —</option>
+            {grupo && grupo.componentes.map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Inputs de conversión */}
+      {comp && (
+        <>
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Convencional
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={valorConv}
+                  onChange={handleValorConv}
+                  placeholder="0"
+                  className={inputCls}
+                />
+                <span className="text-xs font-mono text-slate-400 dark:text-slate-500 w-16 text-center shrink-0">
+                  {comp.unidConv}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col items-center mt-4 gap-0.5">
+              <span className="text-slate-400 dark:text-slate-500 text-lg">⇄</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">×{comp.factor}</span>
+            </div>
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Sistema Internacional (SI)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={valorSI}
+                  onChange={handleValorSI}
+                  placeholder="0"
+                  className={inputCls}
+                />
+                <span className="text-xs font-mono text-slate-400 dark:text-slate-500 w-16 text-center shrink-0">
+                  {comp.unidSI}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Resultado destacado */}
+          {(valorConv !== '' || valorSI !== '') && (
+            <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-4">
+              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                {comp.label}
+              </p>
+              {direccion === 'conv_to_si' && valorConv !== '' && valorSI !== '' && (
+                <p className="text-sm text-blue-800 dark:text-blue-200 font-mono">
+                  {valorConv} {comp.unidConv} × {comp.factor} = <strong>{valorSI} {comp.unidSI}</strong>
+                </p>
+              )}
+              {direccion === 'si_to_conv' && valorSI !== '' && valorConv !== '' && (
+                <p className="text-sm text-blue-800 dark:text-blue-200 font-mono">
+                  {valorSI} {comp.unidSI} ÷ {comp.factor} = <strong>{valorConv} {comp.unidConv}</strong>
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Tabla de referencia del grupo seleccionado */}
+      {grupo && (
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <th className="px-3 py-2 text-left font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Componente</th>
+                <th className="px-3 py-2 text-center font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Unid. Conv.</th>
+                <th className="px-3 py-2 text-center font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Factor</th>
+                <th className="px-3 py-2 text-center font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Unid. SI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {grupo.componentes.map((c) => (
+                <tr
+                  key={c.id}
+                  onClick={() => { setCompId(c.id); setValorConv(''); setValorSI(''); }}
+                  className={`border-b border-slate-100 dark:border-slate-800 last:border-0 cursor-pointer transition-colors ${
+                    compId === c.id
+                      ? 'bg-blue-50 dark:bg-blue-900/30'
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  }`}
+                >
+                  <td className={`px-3 py-2 font-medium ${compId === c.id ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}>{c.label}</td>
+                  <td className="px-3 py-2 text-center font-mono text-slate-500 dark:text-slate-400">{c.unidConv}</td>
+                  <td className="px-3 py-2 text-center font-mono text-blue-600 dark:text-blue-400 font-semibold">{c.factor}</td>
+                  <td className="px-3 py-2 text-center font-mono text-slate-500 dark:text-slate-400">{c.unidSI}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="text-xs text-slate-400 dark:text-slate-500">
+        Conv → SI: valor × factor · SI → Conv: valor ÷ factor · Fuente: v2.0 Clinical Units Reference
+      </p>
+    </div>
+  );
+}
+
 // ─── Componente principal: Conversiones ──────────────────────────────────────
 export default function Conversiones({ pesoKg }) {
   return (
@@ -182,6 +420,11 @@ export default function Conversiones({ pesoKg }) {
           Conversión bidireccional de unidades clínicas veterinarias.
         </p>
       </div>
+
+      {/* Unidades Clínicas SI ↔ Convencional */}
+      <Seccion titulo="Unidades Clínicas (Convencional ↔ SI)" emoji="⚗️">
+        <ConversorUnidadesClincias />
+      </Seccion>
 
       {/* Peso sincronizado con el global */}
       <Seccion titulo="Peso" emoji="⚖️">
