@@ -16,6 +16,7 @@ app.use('/api/cirugias', require('./src/routes/cirugias'));
 app.use('/api/anestesia', require('./src/routes/anestesia'));
 app.use('/api/vacunas', require('./src/routes/vacunas'));
 app.use('/api/reports', require('./src/routes/reports'));
+app.use('/api/calculadora', require('./src/routes/calculadora'));
 
 app.get('/api/stats', (req, res) => {
   const sql = `

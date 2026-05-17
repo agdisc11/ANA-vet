@@ -65,6 +65,20 @@ const modulos = [
   },
 ];
 
+// Calculadoras destacadas para el banner del dashboard
+const CALC_DESTACADAS = [
+  { emoji: '💉', label: 'Anestesia', desc: 'Flow rates · ASA · Agente volátil' },
+  { emoji: '💧', label: 'Fluidos', desc: 'Fluidoterapia · CRI · Osmolalidad' },
+  { emoji: '🩸', label: 'Blood Gas', desc: 'Ácido-base · Anion gap · HCO₃' },
+  { emoji: '🥩', label: 'Nutrición', desc: 'RER · DER · Cantidad a alimentar' },
+  { emoji: '💊', label: 'Farmacia', desc: 'Dosis · Volumen · Concentración' },
+  { emoji: '📊', label: 'Scores', desc: 'Pain · Glasgow · SIRS' },
+  { emoji: '☠️', label: 'Toxicología', desc: 'Exposición · Nivel de riesgo' },
+  { emoji: '🔄', label: 'Conversiones', desc: 'Peso · Temp · Presiones · Suturas' },
+  { emoji: '❤️', label: 'Cardiac', desc: 'MAP · Presión de pulso' },
+  { emoji: '🔬', label: 'Hematología', desc: 'Transfusión · Volumen sanguíneo' },
+];
+
 const acciones = [
   { label: 'Nuevo Tutor', ruta: '/tutores?action=new', color: 'bg-blue-600 hover:bg-blue-700' },
   { label: 'Nuevo Paciente', ruta: '/pacientes?action=new', color: 'bg-emerald-600 hover:bg-emerald-700' },
@@ -91,33 +105,87 @@ export default function Dashboard() {
   const total = Object.values(stats).reduce((a, b) => (typeof b === 'number' ? a + b : a), 0);
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in space-y-8">
       {/* Header */}
-      <div className="mb-8">
+      <div>
         <p className="text-sm text-slate-500 dark:text-slate-400 capitalize mb-1">{today}</p>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{getGreeting()} 👋</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Aquí tienes el resumen de tu clínica veterinaria.</p>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        {modulos.map(m => (
-          <button
-            key={m.key}
-            onClick={() => navigate(m.ruta)}
-            className="card p-4 text-left hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700 transition-all duration-200 group"
-          >
-            <div className={`w-9 h-9 rounded-lg ${m.light} ${m.text} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-              {m.icon}
+      {/* ── Banner Calculadoras Clínicas ─────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-700 dark:via-blue-800 dark:to-indigo-900 p-6 shadow-lg">
+        {/* Decoración de fondo */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
+          {/* Texto principal */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-3xl">🧮</span>
+              <div>
+                <span className="inline-block px-2.5 py-0.5 bg-white/20 text-white text-xs font-bold rounded-full uppercase tracking-widest mb-1">
+                  Nuevo
+                </span>
+                <h2 className="text-xl font-bold text-white leading-tight">
+                  Calculadoras Clínicas
+                </h2>
+              </div>
             </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats[m.key] ?? 0}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">{m.label}</p>
-          </button>
-        ))}
+            <p className="text-blue-100 text-sm leading-relaxed max-w-lg">
+              10 módulos de cálculo clínico veterinario: anestesia, fluidos, blood gas, nutrición, farmacia, toxicología, scores, hematología y más. Con peso global del paciente compartido entre todas las calculadoras.
+            </p>
+            <button
+              onClick={() => navigate('/calculadora')}
+              className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-blue-700 font-bold text-sm rounded-xl hover:bg-blue-50 transition-all duration-150 shadow-sm"
+            >
+              <span>Abrir Calculadoras</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Grid de calculadoras disponibles */}
+          <div className="grid grid-cols-5 gap-2 flex-shrink-0">
+            {CALC_DESTACADAS.map((c) => (
+              <button
+                key={c.label}
+                onClick={() => navigate('/calculadora')}
+                title={`${c.label} — ${c.desc}`}
+                className="flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-150 group"
+              >
+                <span className="text-xl group-hover:scale-110 transition-transform">{c.emoji}</span>
+                <span className="text-white text-xs font-medium leading-tight text-center">{c.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div>
+        <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Estadísticas</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {modulos.map(m => (
+            <button
+              key={m.key}
+              onClick={() => navigate(m.ruta)}
+              className="card p-4 text-left hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700 transition-all duration-200 group"
+            >
+              <div className={`w-9 h-9 rounded-lg ${m.light} ${m.text} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                {m.icon}
+              </div>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats[m.key] ?? 0}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">{m.label}</p>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Módulos principales */}
         <div className="lg:col-span-2">
           <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Módulos</h2>
@@ -138,6 +206,21 @@ export default function Dashboard() {
                 </div>
               </button>
             ))}
+
+            {/* Tarjeta de Calculadoras dentro de la grilla de módulos */}
+            <button
+              onClick={() => navigate('/calculadora')}
+              className="card-hover p-4 text-left group border-2 border-dashed border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform text-xl">
+                🧮
+              </div>
+              <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Calculadoras</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Herramientas clínicas</p>
+              <div className="mt-3 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                10 módulos →
+              </div>
+            </button>
           </div>
         </div>
 
@@ -182,13 +265,20 @@ export default function Dashboard() {
                   {a.label}
                 </button>
               ))}
+              <button
+                onClick={() => navigate('/calculadora')}
+                className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+              >
+                <span>🧮</span>
+                <span>Calculadoras Clínicas</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <p className="text-center text-xs text-slate-400 dark:text-slate-600 mt-4">
+      <p className="text-center text-xs text-slate-400 dark:text-slate-600 pb-2">
         ANA-vet · Sistema de Gestión Veterinaria
       </p>
     </div>

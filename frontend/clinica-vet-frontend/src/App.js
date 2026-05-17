@@ -15,6 +15,7 @@ import HospitalizacionesRegistro from './pages/HospitalizacionesRegistro';
 import CirugiasRegistro from './pages/CirugiasRegistro';
 import VacunasRegistro from './pages/VacunasRegistro';
 import Reportes from './pages/Reportes';
+import Calculadora from './pages/Calculadora';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
                   <Route path="/cirugias" element={<CirugiasRegistro />} />
                   <Route path="/vacunas" element={<VacunasRegistro />} />
                   <Route path="/reportes" element={<Reportes />} />
+                  <Route path="/calculadora" element={<Calculadora />} />
                   <Route path="/expediente/:pacienteId" element={<Expediente />} />
                   <Route path="/consulta/:pacienteId/:expedienteId" element={<Consulta />} />
                   <Route path="/hospitalizacion/:pacienteId/:expedienteId" element={<Hospitalizacion />} />
