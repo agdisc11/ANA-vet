@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import API from '../api';
+import Toast from '../components/Toast';
 
 export default function ConsultasRegistro() {
   const navigate = useNavigate();
+  const { search } = useLocation();
   const [consultas, setConsultas] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [cargando, setCargando] = useState(true);
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
     API.get('/consultas/all')
@@ -14,6 +17,14 @@ export default function ConsultasRegistro() {
       .catch(console.error)
       .finally(() => setCargando(false));
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    if (params.get('action') === 'new') {
+      setToast('Para registrar una nueva consulta, abre el expediente del paciente y usa el botón "Nueva consulta".');
+      window.history.replaceState({}, '', '/consultas');
+    }
+  }, [search]);
 
   const filtradas = consultas.filter(item => {
     const q = searchQuery.toLowerCase();
@@ -114,6 +125,13 @@ export default function ConsultasRegistro() {
           {filtradas.length} consulta{filtradas.length !== 1 ? 's' : ''} encontrada{filtradas.length !== 1 ? 's' : ''}
         </p>
       )}
+
+      <Toast
+        message={toast}
+        type="error"
+        onClose={() => setToast('')}
+        duration={5000}
+      />
     </div>
   );
 }

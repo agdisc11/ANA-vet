@@ -66,9 +66,9 @@ const modulos = [
 ];
 
 const acciones = [
-  { label: 'Nuevo Tutor', ruta: '/tutores', color: 'bg-blue-600 hover:bg-blue-700' },
-  { label: 'Nuevo Paciente', ruta: '/pacientes', color: 'bg-emerald-600 hover:bg-emerald-700' },
-  { label: 'Nueva Consulta', ruta: '/consultas', color: 'bg-violet-600 hover:bg-violet-700' },
+  { label: 'Nuevo Tutor', ruta: '/tutores?action=new', color: 'bg-blue-600 hover:bg-blue-700' },
+  { label: 'Nuevo Paciente', ruta: '/pacientes?action=new', color: 'bg-emerald-600 hover:bg-emerald-700' },
+  { label: 'Nueva Consulta', ruta: '/consultas?action=new', color: 'bg-violet-600 hover:bg-violet-700' },
   { label: 'Ver Reportes', ruta: '/reportes', color: 'bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500' },
 ];
 

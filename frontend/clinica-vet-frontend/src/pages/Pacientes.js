@@ -61,7 +61,11 @@ export default function Pacientes() {
 
   useEffect(() => {
     cargar();
-    if (new URLSearchParams(search).get('new') === 'true') setMostrarForm(true);
+    const params = new URLSearchParams(search);
+    if (params.get('action') === 'new') {
+      setMostrarForm(true);
+      window.history.replaceState({}, '', '/pacientes');
+    }
   }, [search]);
 
   useEffect(() => { setPagina(1); }, [busqueda]);

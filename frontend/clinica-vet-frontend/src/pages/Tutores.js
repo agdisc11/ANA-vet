@@ -17,7 +17,11 @@ export default function Tutores() {
 
   useEffect(() => {
     API.get('/tutores').then(r => setTutores(r.data));
-    if (new URLSearchParams(search).get('new') === 'true') setMostrarForm(true);
+    const params = new URLSearchParams(search);
+    if (params.get('action') === 'new') {
+      setMostrarForm(true);
+      window.history.replaceState({}, '', '/tutores');
+    }
   }, [search]);
 
   useEffect(() => { setPagina(1); }, [busqueda]);
