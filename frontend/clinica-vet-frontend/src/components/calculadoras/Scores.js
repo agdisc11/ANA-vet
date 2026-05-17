@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 // ─── Datos: Pain Score Colorado (0–4) ────────────────────────────────────────
 const PAIN_LEVELS = [
@@ -232,7 +232,8 @@ function PainScore() {
           return (
             <button
               key={p.nivel}
-              onClick={() => setSeleccionado(isActive ? null : p.nivel)}
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSeleccionado(isActive ? null : p.nivel); }}
               className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition-all duration-150 ${
                 isActive
                   ? `${cm.bg} ${cm.border}`
@@ -284,6 +285,25 @@ function PainScore() {
   );
 }
 
+// ─── Sub-componente SelectScore (extraído al nivel superior para evitar remount) ─
+const GLASGOW_SELECT_CLS = 'w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
+
+function SelectScore({ label, opciones, valor, onChange }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{label}</label>
+      <select value={valor} onChange={(e) => onChange(e.target.value)} className={GLASGOW_SELECT_CLS}>
+        <option value="">— Selecciona —</option>
+        {opciones.map((o) => (
+          <option key={o.valor} value={o.valor}>
+            {o.valor} — {o.descripcion}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 // ─── Glasgow Coma Score ───────────────────────────────────────────────────────
 function GlasgowScore() {
   const [motor, setMotor] = useState('');
@@ -294,24 +314,6 @@ function GlasgowScore() {
   const listo = motor && tronco && conciencia;
   const dx = listo ? glasgowDiagnostico(total) : null;
   const c = dx ? COLOR_MAP[dx.color] : null;
-
-  const selectCls = 'w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition';
-
-  function SelectScore({ label, opciones, valor, onChange }) {
-    return (
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{label}</label>
-        <select value={valor} onChange={(e) => onChange(e.target.value)} className={selectCls}>
-          <option value="">— Selecciona —</option>
-          {opciones.map((o) => (
-            <option key={o.valor} value={o.valor}>
-              {o.valor} — {o.descripcion}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -364,7 +366,8 @@ function SIRSScore() {
           return (
             <button
               key={c.id}
-              onClick={() => toggle(c.id)}
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(c.id); }}
               className={`flex items-center gap-4 px-4 py-3.5 rounded-xl border-2 text-left transition-all duration-150 ${
                 activo
                   ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700'
@@ -427,25 +430,38 @@ function SIRSScore() {
   );
 }
 
-// ─── CMPS-SF — Escala de Dolor de Glasgow Corta ───────────────────────────────
+// ─── 6 hooks de estado independientes para CMPS-SF (un useState por sección) ─
+// Esto evita que un único objeto de estado compartido cause re-renders problemáticos.
+
 function CMPSScore() {
-  // Estado: un valor por sección (null = no seleccionado)
-  const [respuestas, setRespuestas] = useState(
-    Object.fromEntries(CLINICAL_CONSTANTS.cmps.secciones.map((s) => [s.id, null]))
-  );
+  const [rVocalizacion, setRVocalizacion] = useState(null);
+  const [rAtencionHerida, setRAtencionHerida] = useState(null);
+  const [rLocomocion, setRLocomocion] = useState(null);
+  const [rPalpacion, setRPalpacion] = useState(null);
+  const [rAnimo, setRAnimo] = useState(null);
+  const [rPostura, setRPostura] = useState(null);
   const [hayFractura, setHayFractura] = useState(false);
 
-  function handleRespuesta(seccionId, valor) {
-    setRespuestas((prev) => ({ ...prev, [seccionId]: valor }));
-  }
+  // Mapa de id → [valor, setter] para iterar sin objeto compartido
+  const seccionState = {
+    vocalizacion:   [rVocalizacion,   setRVocalizacion],
+    atencion_herida:[rAtencionHerida, setRAtencionHerida],
+    locomocion:     [rLocomocion,     setRLocomocion],
+    palpacion:      [rPalpacion,      setRPalpacion],
+    animo:          [rAnimo,          setRAnimo],
+    postura:        [rPostura,        setRPostura],
+  };
 
-  // Calcular score total
-  const todasRespondidas = CLINICAL_CONSTANTS.cmps.secciones.every((s) => respuestas[s.id] !== null);
+  const secciones = CLINICAL_CONSTANTS.cmps.secciones;
+
+  const valores = [rVocalizacion, rAtencionHerida, rLocomocion, rPalpacion, rAnimo, rPostura];
+  const seccionesRespondidas = valores.filter((v) => v !== null).length;
+  const todasRespondidas = seccionesRespondidas === 6;
+
   const scoreTotal = todasRespondidas
-    ? CLINICAL_CONSTANTS.cmps.secciones.reduce((acc, s) => acc + (respuestas[s.id] ?? 0), 0)
+    ? valores.reduce((acc, v) => acc + v, 0)
     : null;
 
-  // Umbrales dinámicos según fractura
   const umbral = hayFractura
     ? CLINICAL_CONSTANTS.cmps.umbralConFractura
     : CLINICAL_CONSTANTS.cmps.umbralSinFractura;
@@ -455,17 +471,24 @@ function CMPSScore() {
 
   const requiereRescate = scoreTotal !== null && scoreTotal >= umbral;
 
-  // Limpiar todas las respuestas
   function resetear() {
-    setRespuestas(Object.fromEntries(CLINICAL_CONSTANTS.cmps.secciones.map((s) => [s.id, null])));
+    setRVocalizacion(null);
+    setRAtencionHerida(null);
+    setRLocomocion(null);
+    setRPalpacion(null);
+    setRAnimo(null);
+    setRPostura(null);
     setHayFractura(false);
   }
+
+  const hayAlgunaRespuesta = valores.some((v) => v !== null);
 
   return (
     <div className="flex flex-col gap-5">
       {/* Toggle de fractura */}
       <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
         <button
+          type="button"
           onClick={() => setHayFractura((v) => !v)}
           className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
             hayFractura ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-600'
@@ -489,15 +512,15 @@ function CMPSScore() {
 
       {/* Secciones de evaluación */}
       <div className="flex flex-col gap-4">
-        {CLINICAL_CONSTANTS.cmps.secciones.map((seccion) => {
-          const valorActual = respuestas[seccion.id];
+        {secciones.map((seccion) => {
+          const [valorActual, setValor] = seccionState[seccion.id];
           return (
             <div key={seccion.id} className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-base">{seccion.emoji}</span>
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                   {seccion.label}
-                </label>
+                </span>
                 {valorActual !== null && (
                   <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
                     {valorActual} pts
@@ -507,24 +530,18 @@ function CMPSScore() {
               <div className="flex flex-col gap-1.5 pl-2">
                 {seccion.opciones.map((opcion) => {
                   const isSelected = valorActual === opcion.valor;
+                  const inputId = `cmpssf-${seccion.id}-${opcion.valor}`;
                   return (
-                    <label
-                      key={opcion.valor}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-all duration-150 ${
+                    <button
+                      key={inputId}
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setValor(opcion.valor); }}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-all duration-150 text-left w-full ${
                         isSelected
                           ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600'
                           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                       }`}
                     >
-                      <input
-                        type="radio"
-                        name={seccion.id}
-                        value={opcion.valor}
-                        checked={isSelected}
-                        onChange={() => handleRespuesta(seccion.id, opcion.valor)}
-                        className="sr-only"
-                      />
-                      {/* Radio visual */}
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                         isSelected
                           ? 'border-blue-500 bg-blue-500'
@@ -538,7 +555,7 @@ function CMPSScore() {
                       <span className={`text-xs ${isSelected ? 'text-blue-800 dark:text-blue-200 font-medium' : 'text-slate-600 dark:text-slate-400'}`}>
                         {opcion.texto}
                       </span>
-                    </label>
+                    </button>
                   );
                 })}
               </div>
@@ -551,14 +568,12 @@ function CMPSScore() {
       {!todasRespondidas && (
         <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
           <span>
-            {CLINICAL_CONSTANTS.cmps.secciones.filter((s) => respuestas[s.id] !== null).length} / {CLINICAL_CONSTANTS.cmps.secciones.length} secciones completadas
+            {seccionesRespondidas} / {secciones.length} secciones completadas
           </span>
           <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-500 rounded-full transition-all duration-300"
-              style={{
-                width: `${(CLINICAL_CONSTANTS.cmps.secciones.filter((s) => respuestas[s.id] !== null).length / CLINICAL_CONSTANTS.cmps.secciones.length) * 100}%`,
-              }}
+              style={{ width: `${(seccionesRespondidas / secciones.length) * 100}%` }}
             />
           </div>
         </div>
@@ -597,7 +612,7 @@ function CMPSScore() {
               </p>
             </div>
           ) : (
-            <p className={`text-sm font-medium text-green-700 dark:text-green-300`}>
+            <p className="text-sm font-medium text-green-700 dark:text-green-300">
               Score dentro del rango aceptable. Continuar monitoreo regular del dolor.
             </p>
           )}
@@ -609,8 +624,9 @@ function CMPSScore() {
       )}
 
       {/* Botón de reset */}
-      {Object.values(respuestas).some((v) => v !== null) && (
+      {hayAlgunaRespuesta && (
         <button
+          type="button"
           onClick={resetear}
           className="w-full py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
         >
@@ -628,7 +644,7 @@ function CMPSScore() {
 // ─── Componente principal: Scores ────────────────────────────────────────────
 export default function Scores() {
   return (
-    <div className="flex flex-col gap-10 max-w-2xl">
+    <div className="w-full flex flex-col gap-10 max-w-2xl">
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Scores Clínicos</h2>
