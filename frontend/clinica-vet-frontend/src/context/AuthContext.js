@@ -105,6 +105,9 @@ export function AuthProvider({ children }) {
   // ── Logout ─────────────────────────────────────────────────
   const logout = useCallback(() => {
     setSession(null);
+    localStorage.removeItem(SESSION_KEY);
+    delete API.defaults.headers.common['Authorization'];
+    window.location.href = '/login';
   }, []);
 
   // ── Valores expuestos al árbol de componentes ───────────────

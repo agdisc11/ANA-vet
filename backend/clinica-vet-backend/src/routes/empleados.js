@@ -120,16 +120,88 @@ router.get('/:id', authMiddleware, soloClinica, (req, res) => {
 });
 
 // ============================================================
+// Utilidad: genera un correo corporativo único para un empleado
+// Formato: nombre.apellido@anavet-[clinica_id].com
+// Limpia acentos, espacios y pasa a minúsculas.
+// Si ya existe ese correo, agrega un sufijo numérico incremental.
+// ============================================================
+function limpiarTexto(str) {
+  return str
+    .normalize('NFD')                    // descompone caracteres acentuados
+    .replace(/[\u0300-\u036f]/g, '')     // elimina diacríticos
+    .replace(/[^a-zA-Z0-9]/g, '')        // elimina todo lo que no sea alfanumérico
+    .toLowerCase();
+}
+
+function generarBaseCorreo(nombre, apellidos, clinica_id) {
+  const n = limpiarTexto(nombre.split(' ')[0]);          // primer nombre
+  const a = limpiarTexto(apellidos.split(' ')[0]);       // primer apellido
+  return `${n}.${a}@anavet-${clinica_id}.com`;
+}
+
+function resolverCorreoUnico(baseCorreo, clinica_id, callback) {
+  // Busca todos los correos del dominio de esta clínica que coincidan con la base
+  const dominio = `@anavet-${clinica_id}.com`;
+  const localBase = baseCorreo.replace(dominio, '');
+
+  db.query(
+    'SELECT email FROM empleados WHERE email LIKE ?',
+    [`${localBase}%${dominio}`],
+    (err, rows) => {
+      if (err) return callback(err, null);
+
+      if (rows.length === 0) {
+        // No hay conflicto, usar el correo base
+        return callback(null, baseCorreo);
+      }
+
+      // Buscar el sufijo numérico más alto y sumar 1
+      const existentes = rows.map(r => r.email);
+      let contador = 1;
+      let candidato = `${localBase}${contador}${dominio}`;
+      while (existentes.includes(candidato)) {
+        contador++;
+        candidato = `${localBase}${contador}${dominio}`;
+      }
+      return callback(null, candidato);
+    }
+  );
+}
+
+// ============================================================
 // POST /api/empleados
 // Registra un nuevo empleado en la clínica autenticada
-// Body: { nombre, apellidos, email, password, rol_id, telefono? }
+// Body: { nombre, apellidos, email, password, rol_id, telefono?, generar_correo? }
+// Si generar_correo=true, el email se genera automáticamente y no es requerido en el body.
 // Requiere: Bearer token de tipo 'clinica'
 // ============================================================
-router.post('/', authMiddleware, soloClinica, async (req, res) => {
-  const { nombre, apellidos, email, password, rol_id, telefono } = req.body;
+// ── Utilidad: genera una contraseña temporal segura ──────────────────────────
+function generarPasswordTemporal() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const especiales = '!@#$*';
+  let pwd = '';
+  // 8 caracteres alfanuméricos
+  for (let i = 0; i < 8; i++) {
+    pwd += chars[Math.floor(Math.random() * chars.length)];
+  }
+  // 1 carácter especial al final
+  pwd += especiales[Math.floor(Math.random() * especiales.length)];
+  return pwd;
+}
 
-  if (!nombre || !apellidos || !email || !password || !rol_id) {
-    return res.status(400).json({ error: 'Campos requeridos: nombre, apellidos, email, password, rol_id' });
+router.post('/', authMiddleware, soloClinica, async (req, res) => {
+  const { nombre, apellidos, rol_id, telefono, generar_correo } = req.body;
+  // Normalizar: si generar_correo está activo ignoramos el email y password que vengan del body
+  let email = generar_correo ? null : (req.body.email || '').trim();
+  let password = generar_correo ? generarPasswordTemporal() : (req.body.password || '');
+
+  // Validación: nombre y rol siempre requeridos
+  if (!nombre || !apellidos || !rol_id) {
+    return res.status(400).json({ error: 'Campos requeridos: nombre, apellidos, rol_id' });
+  }
+  // Solo exigir email y password cuando NO se autogenera
+  if (!generar_correo && (!email || !password)) {
+    return res.status(400).json({ error: 'Debes proporcionar un email y contraseña, o activar generar_correo=true' });
   }
 
   try {
@@ -143,27 +215,60 @@ router.post('/', authMiddleware, soloClinica, async (req, res) => {
           return res.status(400).json({ error: 'El rol_id no existe o no pertenece a tu clínica' });
         }
 
-        // Verificar email único
-        db.query('SELECT id FROM empleados WHERE email = ?', [email], async (err2, emailRows) => {
-          if (err2) return res.status(500).json({ error: err2.message });
-          if (emailRows.length > 0) {
-            return res.status(409).json({ error: 'Ya existe un empleado registrado con ese email' });
-          }
+        // ── Rama: generar correo automáticamente ──────────────────────────
+        if (generar_correo) {
+          const baseCorreo = generarBaseCorreo(nombre, apellidos, req.user.clinica_id);
 
-          const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+          resolverCorreoUnico(baseCorreo, req.user.clinica_id, async (errUniq, correoGenerado) => {
+            if (errUniq) return res.status(500).json({ error: errUniq.message });
 
-          db.query(
-            'INSERT INTO empleados (clinica_id, rol_id, nombre, apellidos, email, password_hash, telefono) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [req.user.clinica_id, rol_id, nombre, apellidos, email, password_hash, telefono || null],
-            (err3, result) => {
-              if (err3) return res.status(500).json({ error: err3.message });
-              res.status(201).json({
-                mensaje: 'Empleado registrado exitosamente',
-                empleado_id: result.insertId,
-              });
+            try {
+              const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+
+              db.query(
+                'INSERT INTO empleados (clinica_id, rol_id, nombre, apellidos, email, password_hash, telefono) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [req.user.clinica_id, rol_id, nombre, apellidos, correoGenerado, password_hash, telefono || null],
+                (err3, result) => {
+                  if (err3) return res.status(500).json({ error: err3.message });
+                  res.status(201).json({
+                    mensaje: 'Empleado registrado exitosamente',
+                    empleado_id: result.insertId,
+                    correo_generado: correoGenerado,
+                    // Alias para que el frontend pueda leer res.data.email y res.data.password_temporal
+                    email: correoGenerado,
+                    password_temporal: password,
+                  });
+                }
+              );
+            } catch (hashErr) {
+              res.status(500).json({ error: hashErr.message });
             }
-          );
-        });
+          });
+
+        // ── Rama: email proporcionado manualmente ─────────────────────────
+        } else {
+          // Verificar email único
+          db.query('SELECT id FROM empleados WHERE email = ?', [email], async (err2, emailRows) => {
+            if (err2) return res.status(500).json({ error: err2.message });
+            if (emailRows.length > 0) {
+              return res.status(409).json({ error: 'Ya existe un empleado registrado con ese email' });
+            }
+
+            const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+
+            db.query(
+              'INSERT INTO empleados (clinica_id, rol_id, nombre, apellidos, email, password_hash, telefono) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [req.user.clinica_id, rol_id, nombre, apellidos, email, password_hash, telefono || null],
+              (err3, result) => {
+                if (err3) return res.status(500).json({ error: err3.message });
+                res.status(201).json({
+                  mensaje: 'Empleado registrado exitosamente',
+                  empleado_id: result.insertId,
+                });
+              }
+            );
+          });
+        }
       }
     );
   } catch (err) {

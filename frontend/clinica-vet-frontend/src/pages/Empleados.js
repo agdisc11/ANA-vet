@@ -32,6 +32,12 @@ export default function Empleados() {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
 
+  // Modo de correo: 'personal' | 'autogenerado'
+  const [emailMode, setEmailMode] = useState('personal');
+
+  // Modal de credenciales autogeneradas
+  const [credenciales, setCredenciales] = useState(null); // { email, password }
+
   // Confirmación de eliminación
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -74,6 +80,7 @@ export default function Empleados() {
   const handleOpenModal = () => {
     setForm(FORM_INITIAL);
     setFormError(null);
+    setEmailMode('personal');
     setShowModal(true);
   };
 
@@ -87,28 +94,60 @@ export default function Empleados() {
     e.preventDefault();
     setFormError(null);
 
-    // Validación básica
-    if (!form.nombre.trim() || !form.email.trim() || !form.password.trim() || !form.rol_id) {
-      setFormError('Nombre, correo, contraseña y rol son obligatorios.');
+    const generarCorreo = emailMode === 'autogenerado';
+
+    // Validación básica — en modo autogenerado NO se exigen email ni password
+    if (!form.nombre.trim() || !form.rol_id) {
+      setFormError('Nombre y rol son obligatorios.');
+      return;
+    }
+    if (!generarCorreo && (!form.email.trim() || !form.password.trim())) {
+      setFormError('Correo y contraseña son obligatorios cuando no se autogenera el correo.');
       return;
     }
 
     setSubmitting(true);
     try {
-      await API.post('/empleados', {
+      const payload = {
         nombre: form.nombre.trim(),
         apellidos: form.apellidos.trim(),
-        email: form.email.trim(),
-        password: form.password,
         telefono: form.telefono.trim(),
         rol_id: Number(form.rol_id),
-      });
+        generar_correo: generarCorreo,
+      };
+
+      if (!generarCorreo) {
+        // Solo incluir email y password cuando el usuario los proporcionó manualmente
+        payload.email = form.email.trim();
+        payload.password = form.password;
+      }
+      // En modo autogenerado NO enviamos email ni password: el backend los genera
+
+      const res = await API.post('/empleados', payload);
+
+      // Limpiar formulario y cerrar modal ANTES de mostrar credenciales
+      setForm(FORM_INITIAL);
+      setEmailMode('personal');
       setShowModal(false);
-      setSuccessMsg('Empleado registrado correctamente.');
-      setTimeout(() => setSuccessMsg(null), 3500);
+
+      if (generarCorreo && res.data?.email && res.data?.password_temporal) {
+        // Mostrar modal verde con las credenciales autogeneradas que devolvió el backend
+        setCredenciales({
+          email: res.data.email,
+          password: res.data.password_temporal,
+        });
+      } else {
+        setSuccessMsg('Empleado registrado correctamente.');
+        setTimeout(() => setSuccessMsg(null), 3500);
+      }
+
       await fetchData();
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Error al registrar el empleado.');
+      setFormError(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Error al registrar el empleado.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -315,7 +354,7 @@ export default function Empleados() {
             </div>
 
             {/* Formulario */}
-            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 max-h-[80vh] overflow-y-auto">
               {formError && (
                 <div className="flex items-start gap-2.5 px-4 py-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl text-red-700 dark:text-red-300 text-sm">
                   <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -356,38 +395,133 @@ export default function Empleados() {
                 />
               </div>
 
-              {/* Correo */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Correo electrónico <span className="text-red-500">*</span>
+              {/* ── Switch: Modo de acceso ─────────────────────────── */}
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4 space-y-3">
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                  ¿Cómo deseas registrar el acceso?
+                </p>
+
+                {/* Opción: Correo personal */}
+                <label
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all duration-150 ${
+                    emailMode === 'personal'
+                      ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="emailMode"
+                    value="personal"
+                    checked={emailMode === 'personal'}
+                    onChange={() => setEmailMode('personal')}
+                    className="sr-only"
+                  />
+                  {/* Indicador visual */}
+                  <span
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                      emailMode === 'personal'
+                        ? 'border-teal-500'
+                        : 'border-slate-300 dark:border-slate-600'
+                    }`}
+                  >
+                    {emailMode === 'personal' && (
+                      <span className="w-2 h-2 rounded-full bg-teal-500 block" />
+                    )}
+                  </span>
+                  <div>
+                    <p className={`text-sm font-semibold ${emailMode === 'personal' ? 'text-teal-700 dark:text-teal-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                      Correo personal
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Ingresa el correo y contraseña del empleado
+                    </p>
+                  </div>
                 </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="empleado@clinica.com"
-                  required
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
-                />
+
+                {/* Opción: Generar correo único */}
+                <label
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all duration-150 ${
+                    emailMode === 'autogenerado'
+                      ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="emailMode"
+                    value="autogenerado"
+                    checked={emailMode === 'autogenerado'}
+                    onChange={() => setEmailMode('autogenerado')}
+                    className="sr-only"
+                  />
+                  <span
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                      emailMode === 'autogenerado'
+                        ? 'border-teal-500'
+                        : 'border-slate-300 dark:border-slate-600'
+                    }`}
+                  >
+                    {emailMode === 'autogenerado' && (
+                      <span className="w-2 h-2 rounded-full bg-teal-500 block" />
+                    )}
+                  </span>
+                  <div>
+                    <p className={`text-sm font-semibold ${emailMode === 'autogenerado' ? 'text-teal-700 dark:text-teal-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                      Generar correo único de clínica
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      El sistema asignará un correo institucional automáticamente
+                    </p>
+                  </div>
+                </label>
               </div>
 
-              {/* Contraseña */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Contraseña <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                  minLength={6}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
-                />
-              </div>
+              {/* Correo electrónico — visible solo en modo personal */}
+              {emailMode === 'personal' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                    Correo electrónico <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="empleado@clinica.com"
+                    required
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-start gap-3 px-4 py-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl">
+                  <svg className="w-5 h-5 text-teal-500 dark:text-teal-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm text-teal-700 dark:text-teal-300 font-medium leading-snug">
+                    El sistema generará un correo de acceso institucional de forma automática.
+                  </p>
+                </div>
+              )}
+
+              {/* Contraseña — visible solo en modo personal */}
+              {emailMode === 'personal' && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                    Contraseña <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="Mínimo 6 caracteres"
+                    required
+                    minLength={6}
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                </div>
+              )}
 
               {/* Teléfono */}
               <div>
@@ -454,6 +588,102 @@ export default function Empleados() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Credenciales autogeneradas ────────────────── */}
+      {credenciales && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 bg-gradient-to-br from-teal-500 to-teal-600 text-white">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-base font-bold">¡Empleado registrado!</h2>
+                  <p className="text-teal-100 text-xs mt-0.5">Correo institucional generado automáticamente</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Cuerpo */}
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Entrega estas credenciales al empleado. <strong className="text-slate-800 dark:text-slate-200">Guárdalas ahora</strong>, ya que la contraseña temporal no se mostrará de nuevo.
+              </p>
+
+              {/* Correo generado */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  Correo de acceso
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-sm text-slate-800 dark:text-slate-100 break-all select-all">
+                    {credenciales.email}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard?.writeText(credenciales.email)}
+                    title="Copiar correo"
+                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Contraseña temporal */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  Contraseña temporal
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl font-mono text-sm text-amber-800 dark:text-amber-200 break-all select-all">
+                    {credenciales.password}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard?.writeText(credenciales.password)}
+                    title="Copiar contraseña"
+                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Aviso */}
+              <div className="flex items-start gap-2.5 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
+                <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                  Se recomienda que el empleado cambie su contraseña al iniciar sesión por primera vez.
+                </p>
+              </div>
+
+              {/* Botón cerrar */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCredenciales(null);
+                  setSuccessMsg('Empleado registrado correctamente.');
+                  setTimeout(() => setSuccessMsg(null), 3500);
+                }}
+                className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow transition-colors duration-150"
+              >
+                Entendido, cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

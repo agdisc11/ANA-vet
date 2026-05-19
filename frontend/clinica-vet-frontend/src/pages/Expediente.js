@@ -169,6 +169,12 @@ export default function Expediente() {
                 </svg>
                 Cirugía
               </button>
+              <button
+                onClick={() => navigate(`/recibo/${pacienteId}/${e.id}`)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+              >
+                🧾 Recibo
+              </button>
             </div>
           </div>
         ))}

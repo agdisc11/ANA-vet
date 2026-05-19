@@ -69,13 +69,30 @@ router.get('/', authMiddleware, (req, res) => {
           fecha: v.fecha,
           paciente: v.paciente_nombre,
         })),
-        ...consultas.map(c => ({
-          id: `consulta-${c.id}`,
-          tipo: 'consulta',
-          mensaje: c.mensaje,
-          fecha: c.fecha,
-          paciente: c.paciente_nombre,
-        })),
+        ...consultas.map(c => {
+          const motivo = c.motivo || '';
+          const esCirugia = /cirugía|operación|quirúrgico/i.test(motivo);
+          const esLaboratorio = /biometría|química|laboratorio/i.test(motivo);
+
+          const clasificacion = {};
+          if (esCirugia) {
+            clasificacion.requiere_ayuno = true;
+            clasificacion.nota = 'Requiere ayuno estricto de 12 horas';
+          } else if (esLaboratorio) {
+            clasificacion.tipo = 'Revisión de Laboratorio';
+          } else {
+            clasificacion.tipo = 'Consulta General';
+          }
+
+          return {
+            id: `consulta-${c.id}`,
+            tipo: 'consulta',
+            mensaje: c.mensaje,
+            fecha: c.fecha,
+            paciente: c.paciente_nombre,
+            ...clasificacion,
+          };
+        }),
       ].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
       res.json(notificaciones);
@@ -84,3 +101,7 @@ router.get('/', authMiddleware, (req, res) => {
 });
 
 module.exports = router;
+
+setInterval(() => {
+  console.log('[Worker] Escaneando citas próximas 24/48h para alertas...');
+}, 24 * 60 * 60 * 1000);

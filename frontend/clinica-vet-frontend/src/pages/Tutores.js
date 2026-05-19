@@ -26,6 +26,20 @@ export default function Tutores() {
 
   useEffect(() => { setPagina(1); }, [busqueda]);
 
+  const eliminar = async (tutor) => {
+    const confirmado = window.confirm(
+      `¿Estás seguro de eliminar este tutor? Se borrarán también todas sus mascotas asociadas en cascada.`
+    );
+    if (!confirmado) return;
+    try {
+      await API.delete(`/tutores/${tutor.id}`);
+      setTutores(prev => prev.filter(t => t.id !== tutor.id));
+    } catch (e) {
+      console.error(e);
+      alert('Error al eliminar el tutor. Inténtalo de nuevo.');
+    }
+  };
+
   const guardar = async () => {
     if (!form.nombre.trim()) return;
     setGuardando(true);
@@ -137,7 +151,7 @@ export default function Tutores() {
         <table className="w-full text-sm">
           <thead className="table-head">
             <tr>
-              {['Código', 'Nombre', 'Teléfono', 'WhatsApp', 'Correo', 'Dirección'].map(h => (
+              {['Código', 'Nombre', 'Teléfono', 'WhatsApp', 'Correo', 'Dirección', 'Acciones'].map(h => (
                 <th key={h} className="px-4 py-3 text-left">{h}</th>
               ))}
             </tr>
@@ -153,11 +167,23 @@ export default function Tutores() {
                 <td className="table-cell">{t.whatsapp || '—'}</td>
                 <td className="table-cell">{t.correo || '—'}</td>
                 <td className="table-cell text-slate-500 dark:text-slate-400">{t.direccion || '—'}</td>
+                <td className="table-cell">
+                  <button
+                    onClick={() => eliminar(t)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 rounded-md border border-red-200 dark:border-red-800 hover:bg-red-500/10 transition-colors"
+                    title="Eliminar tutor"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Eliminar
+                  </button>
+                </td>
               </tr>
             ))}
             {pagina_items.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center">
+                <td colSpan={7} className="px-4 py-12 text-center">
                   <div className="text-slate-400 dark:text-slate-500">
                     <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />

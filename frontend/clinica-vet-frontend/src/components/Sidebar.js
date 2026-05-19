@@ -49,6 +49,9 @@ const links = [
   { to: '/calculadora', label: 'Calculadoras', icon: (
     <span className="text-base leading-none">🧮</span>
   )},
+  { to: '/inventario', label: 'Inventario', icon: (
+    <span className="text-base leading-none">📦</span>
+  )},
 ];
 
 // Links exclusivos para el rol 'clinica' (administrador)
@@ -64,7 +67,7 @@ export default function Sidebar() {
   const { pathname } = useLocation();
   const { isDark, toggleTheme } = useTheme();
   const { selectedAnimalColor, selectedAnimal } = useSelectedAnimal();
-  const { tipo } = useAuth();
+  const { tipo, logout } = useAuth();
 
   return (
     <aside className="w-60 flex-shrink-0 min-h-0 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 shadow-sm">
@@ -181,6 +184,17 @@ export default function Sidebar() {
             </>
           )}
         </button>
+        {/* Cerrar Sesión */}
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-150"
+        >
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Cerrar Sesión
+        </button>
+
         <div className="px-3 py-1">
           <p className="text-xs text-slate-400 dark:text-slate-600">v1.0 · ANA-vet</p>
         </div>

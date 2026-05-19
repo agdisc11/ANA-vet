@@ -24,6 +24,10 @@ app.use('/api/vacunas', require('./src/routes/vacunas'));
 app.use('/api/reports', require('./src/routes/reports'));
 app.use('/api/calculadora', require('./src/routes/calculadora'));
 app.use('/api/notificaciones', require('./src/routes/notificaciones'));
+app.use('/api/recibos',            require('./src/routes/recibos'));
+app.use('/api/servicios-catalogo', require('./src/routes/servicios-catalogo'));
+app.use('/api/dashboard',          require('./src/routes/dashboard'));
+app.use('/api/inventario',         require('./src/routes/inventario'));
 
 app.get('/api/stats', (req, res) => {
   const sql = `

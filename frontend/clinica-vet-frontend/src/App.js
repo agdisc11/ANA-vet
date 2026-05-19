@@ -21,6 +21,8 @@ import Reportes from './pages/Reportes';
 import Calculadora from './pages/Calculadora';
 import RegistroClinica from './pages/RegistroClinica';
 import Empleados from './pages/Empleados';
+import Recibo from './pages/Recibo';
+import Inventario from './pages/Inventario';
 
 // ─────────────────────────────────────────────────────────────
 // ProtectedRoute — Redirige al Login si no hay sesión activa
@@ -85,6 +87,8 @@ function AppShell() {
           <Route path="/cirugia/:pacienteId/:expedienteId" element={<div className="p-6 max-w-7xl mx-auto"><Cirugia /></div>} />
           <Route path="/vacunas/:pacienteId" element={<div className="p-6 max-w-7xl mx-auto"><Vacunas /></div>} />
           <Route path="/empleados" element={<div className="p-6 max-w-7xl mx-auto"><Empleados /></div>} />
+          <Route path="/recibo/:pacienteId/:expedienteId" element={<div className="p-6 max-w-7xl mx-auto"><Recibo /></div>} />
+          <Route path="/inventario" element={<div className="p-6 max-w-7xl mx-auto"><Inventario /></div>} />
         </Routes>
       </main>
     </div>
