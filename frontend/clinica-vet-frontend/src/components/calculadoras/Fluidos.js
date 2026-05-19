@@ -128,11 +128,11 @@ function FluidoterapiaDeficit({ pesoKg }) {
   const gttMin = total !== null ? (total * parseInt(gotero)) / (24 * 60) : null;
   const mlH = total !== null ? total / 24 : null;
 
-  function handleReset() {
-    setDeshPct('');
-    setPerdidasMl('');
-    setCalcular(false);
-  }
+  // function handleReset() {
+  //   setDeshPct('');
+  //   setPerdidasMl('');
+  //   setCalcular(false);
+  // }
 
   return (
     <div className="flex flex-col gap-4">

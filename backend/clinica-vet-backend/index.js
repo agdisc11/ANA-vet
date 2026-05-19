@@ -7,6 +7,12 @@ const db = require('./src/db/connection');
 app.use(cors());
 app.use(express.json());
 
+// ── Rutas SaaS Multi-tenant (Fase 1) ──────────────────────────
+app.use('/api/clinicas',  require('./src/routes/clinicas'));
+app.use('/api/empleados', require('./src/routes/empleados'));
+app.use('/api/roles',     require('./src/routes/roles'));
+
+// ── Rutas existentes ──────────────────────────────────────────
 app.use('/api/tutores', require('./src/routes/tutores'));
 app.use('/api/pacientes', require('./src/routes/pacientes'));
 app.use('/api/expedientes', require('./src/routes/expedientes'));
@@ -17,6 +23,7 @@ app.use('/api/anestesia', require('./src/routes/anestesia'));
 app.use('/api/vacunas', require('./src/routes/vacunas'));
 app.use('/api/reports', require('./src/routes/reports'));
 app.use('/api/calculadora', require('./src/routes/calculadora'));
+app.use('/api/notificaciones', require('./src/routes/notificaciones'));
 
 app.get('/api/stats', (req, res) => {
   const sql = `

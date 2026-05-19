@@ -274,3 +274,47 @@ Este proyecto implementa correctamente los principios de:
 - ✅ **Experiencia del Usuario**: Accesible, responsive, eficiente
 
 El sistema está diseñado para ser mantenible, escalable y fácil de usar.
+
+---
+
+## Actualización Fase SaaS (Mayo 2026)
+
+### 🔐 Autenticación JWT (Clínica vs Empleados)
+
+Se implementó un sistema de autenticación basado en **JSON Web Tokens (JWT)** con dos niveles de acceso diferenciados:
+
+- **Clínica (Admin):** Token con rol `admin` que otorga acceso completo al sistema, incluyendo gestión de empleados, reportes globales y configuración de la clínica.
+- **Empleados (Staff):** Token con rol `empleado` que restringe el acceso a los módulos asignados según su perfil (médico, recepcionista, etc.).
+
+Cada token incluye el `clinica_id` para garantizar el aislamiento de datos entre tenants. Los endpoints del backend validan el token y el rol antes de procesar cualquier solicitud.
+
+---
+
+### 🏢 Modelo Multi-tenant en la Base de Datos
+
+La base de datos adoptó una arquitectura **multi-tenant de esquema compartido**, donde todas las clínicas coexisten en las mismas tablas pero sus datos están aislados mediante una clave de tenant:
+
+- Se agregó la columna `clinica_id` (FK) a todas las tablas principales: `tutores`, `pacientes`, `expedientes`, `consultas`, `cirugias`, `hospitalizaciones`, etc.
+- Todos los queries filtran obligatoriamente por `clinica_id` para evitar fugas de datos entre clínicas.
+- Se crearon índices compuestos `(clinica_id, id)` para mantener el rendimiento con múltiples tenants.
+
+---
+
+### 👨‍⚕️ Asignación Médica
+
+Se modelaron las relaciones de asignación de personal médico según la complejidad de cada módulo:
+
+- **Consultas (1:N):** Cada consulta tiene un único médico responsable. Se agregó la columna `medico_id` (FK → `empleados.id`) directamente en la tabla `consultas`.
+- **Cirugías (N:M):** Una cirugía puede involucrar múltiples médicos con roles distintos (cirujano, anestesiólogo, asistente). Se implementó la tabla puente `cirugia_medicos (cirugia_id, empleado_id, rol)`.
+- **Hospitalizaciones (N:M):** Un paciente hospitalizado puede ser atendido por varios médicos en distintos turnos. Se implementó la tabla puente `hospitalizacion_medicos (hospitalizacion_id, empleado_id, turno, fecha_asignacion)`.
+
+---
+
+### 🔔 Sistema de Notificaciones Automáticas
+
+Se implementó un módulo de **notificaciones automáticas** orientado a recordatorios de citas y seguimientos:
+
+- **Recordatorios de vacunas:** El sistema evalúa diariamente la columna `proxima_dosis` de la tabla `vacunas` y genera notificaciones para los tutores con 48 horas de anticipación.
+- **Recordatorios de citas:** Las consultas agendadas disparan notificaciones automáticas vía WhatsApp/correo al tutor y al médico asignado.
+- **Canal de entrega:** Integración con servicio de mensajería (WhatsApp Business API / SMTP) usando colas de trabajo asíncronas para no bloquear el flujo principal.
+- **Registro de notificaciones:** Tabla `notificaciones (id, clinica_id, tipo, destinatario, mensaje, estado, fecha_envio)` para auditoría y reenvíos.

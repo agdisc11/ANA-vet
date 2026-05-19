@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../api';
 
@@ -17,7 +17,7 @@ const CAMPOS = [
   { key: 'seguimiento_medico', label: 'Seguimiento médico' },
 ];
 
-const EMPTY = Object.fromEntries([['fecha', ''], ...CAMPOS.map(f => [f.key, ''])]);
+const EMPTY = Object.fromEntries([['fecha', ''], ['empleado_id', ''], ...CAMPOS.map(f => [f.key, ''])]);
 
 function Field({ label, value }) {
   if (!value) return null;
@@ -36,15 +36,30 @@ export default function Consulta() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [guardando, setGuardando] = useState(false);
+  const [empleados, setEmpleados] = useState([]);
+  const [cargandoEmpleados, setCargandoEmpleados] = useState(false);
 
   useEffect(() => {
     API.get(`/consultas/${expedienteId}`).then(r => setConsultas(r.data));
   }, [expedienteId]);
 
+  // Cargar lista de empleados al montar el componente
+  useEffect(() => {
+    setCargandoEmpleados(true);
+    API.get('/empleados')
+      .then(r => setEmpleados(r.data))
+      .catch(() => setEmpleados([]))
+      .finally(() => setCargandoEmpleados(false));
+  }, []);
+
   const guardar = async () => {
     setGuardando(true);
     try {
-      await API.post('/consultas', { expediente_id: expedienteId, ...form });
+      await API.post('/consultas', {
+        expediente_id: expedienteId,
+        ...form,
+        empleado_id: form.empleado_id || null,
+      });
       setForm(EMPTY);
       setMostrarForm(false);
       API.get(`/consultas/${expedienteId}`).then(r => setConsultas(r.data));
@@ -86,9 +101,44 @@ export default function Consulta() {
             </button>
           </div>
 
-          <div className="mb-4">
-            <label className="input-label">Fecha *</label>
-            <input type="date" value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} className="input max-w-xs" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="input-label">Fecha *</label>
+              <input
+                type="date"
+                value={form.fecha}
+                onChange={e => setForm({ ...form, fecha: e.target.value })}
+                className="input"
+              />
+            </div>
+
+            {/* ── Selector de empleado encargado (1:N) ── */}
+            <div>
+              <label className="input-label">Médico encargado</label>
+              {cargandoEmpleados ? (
+                <div className="input flex items-center gap-2 text-slate-400 text-sm">
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Cargando personal...
+                </div>
+              ) : (
+                <select
+                  value={form.empleado_id}
+                  onChange={e => setForm({ ...form, empleado_id: e.target.value })}
+                  className="input"
+                >
+                  <option value="">— Sin asignar —</option>
+                  {empleados.map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.nombre} {emp.apellidos}
+                      {emp.rol_nombre ? ` (${emp.rol_nombre})` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -123,6 +173,14 @@ export default function Consulta() {
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 {new Date(c.fecha).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
+              {c.empleado_nombre && (
+                <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 text-xs font-medium">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  {c.empleado_nombre} {c.empleado_apellidos}
+                </span>
+              )}
               {c.dx_definitivo && <span className="badge-green ml-auto">{c.dx_definitivo}</span>}
             </div>
             <div className="divide-y divide-slate-50 dark:divide-slate-800">

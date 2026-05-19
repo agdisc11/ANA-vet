@@ -177,11 +177,11 @@ export default function Calculadora() {
   }
 
   return (
-    // Ocupa todo el espacio disponible del <main> sin padding extra
-    <div className="-m-6 flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+    // Ocupa todo el espacio disponible del <main> — flex-1 heredado del padre
+    <div className="flex h-full overflow-hidden bg-slate-50 dark:bg-slate-950">
 
       {/* ── Sidebar interno de categorías ─────────────────────────────────── */}
-      <aside className="w-56 flex-shrink-0 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800">
+      <aside className="w-56 flex-shrink-0 min-h-0 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800">
         {/* Título del sidebar interno */}
         <div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
@@ -239,7 +239,7 @@ export default function Calculadora() {
       </aside>
 
       {/* ── Panel derecho ─────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
 
         {/* ── Barra superior: Peso global del paciente ───────────────────── */}
         <div className="flex-shrink-0 flex items-center gap-4 px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">

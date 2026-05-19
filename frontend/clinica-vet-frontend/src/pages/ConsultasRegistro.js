@@ -33,7 +33,8 @@ export default function ConsultasRegistro() {
       item.tutor_nombre?.toLowerCase().includes(q) ||
       item.motivo?.toLowerCase().includes(q) ||
       item.dx_definitivo?.toLowerCase().includes(q) ||
-      item.dx_presuntivo?.toLowerCase().includes(q)
+      item.dx_presuntivo?.toLowerCase().includes(q) ||
+      item.empleado_nombre?.toLowerCase().includes(q)
     );
   });
 
@@ -59,7 +60,7 @@ export default function ConsultasRegistro() {
         <input
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Buscar por paciente, tutor o diagnóstico..."
+          placeholder="Buscar por paciente, tutor, diagnóstico o médico..."
           className="input pl-9"
         />
       </div>
@@ -68,14 +69,14 @@ export default function ConsultasRegistro() {
         <table className="w-full text-sm">
           <thead className="table-head">
             <tr>
-              {['Fecha', 'Paciente', 'Tutor', 'Motivo', 'Diagnóstico', ''].map(h => (
+              {['Fecha', 'Paciente', 'Tutor', 'Médico encargado', 'Motivo', 'Diagnóstico', ''].map(h => (
                 <th key={h} className="px-4 py-3 text-left">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {cargando ? (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">
                 <div className="flex items-center justify-center gap-2">
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -85,7 +86,7 @@ export default function ConsultasRegistro() {
                 </div>
               </td></tr>
             ) : filtradas.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-12 text-center">
+              <tr><td colSpan={7} className="px-4 py-12 text-center">
                 <div className="text-slate-400 dark:text-slate-500">
                   <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -100,6 +101,18 @@ export default function ConsultasRegistro() {
                 </td>
                 <td className="table-cell font-semibold text-slate-800 dark:text-slate-200">{item.paciente_nombre}</td>
                 <td className="table-cell">{item.tutor_nombre} {item.tutor_apellidos}</td>
+                <td className="table-cell">
+                  {item.empleado_nombre ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 text-xs font-medium">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      {item.empleado_nombre} {item.empleado_apellidos}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 dark:text-slate-500 text-xs">Sin asignar</span>
+                  )}
+                </td>
                 <td className="table-cell text-slate-500 dark:text-slate-400 max-w-xs truncate">{item.motivo || '—'}</td>
                 <td className="table-cell">
                   {item.dx_definitivo || item.dx_presuntivo ? (

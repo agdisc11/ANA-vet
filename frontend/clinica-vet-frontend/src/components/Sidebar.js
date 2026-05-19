@@ -1,7 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../ThemeContext';
 import { useSelectedAnimal } from '../SelectedAnimalContext';
+import { useAuth } from '../context/AuthContext';
 import logoClinica from '../assets/logo_clinica.png';
+import NotificacionesBell from './NotificacionesBell';
 
 const links = [
   { to: '/', label: 'Dashboard', icon: (
@@ -49,13 +51,23 @@ const links = [
   )},
 ];
 
+// Links exclusivos para el rol 'clinica' (administrador)
+const clinicaLinks = [
+  { to: '/empleados', label: 'Empleados', icon: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  )},
+];
+
 export default function Sidebar() {
   const { pathname } = useLocation();
   const { isDark, toggleTheme } = useTheme();
   const { selectedAnimalColor, selectedAnimal } = useSelectedAnimal();
+  const { tipo } = useAuth();
 
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 shadow-sm">
+    <aside className="w-60 flex-shrink-0 min-h-0 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 shadow-sm">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3">
@@ -109,10 +121,46 @@ export default function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Sección exclusiva para Administrador (tipo === 'clinica') */}
+        {tipo === 'clinica' && (
+          <>
+            <div className="pt-3 pb-1 px-3">
+              <p className="text-xs font-semibold text-slate-400 dark:text-slate-600 uppercase tracking-wider">
+                Administración
+              </p>
+            </div>
+            {clinicaLinks.map(l => {
+              const isActive = pathname === l.to || (l.to !== '/' && pathname.startsWith(l.to));
+              return (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                    isActive
+                      ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <span className={isActive ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 dark:text-slate-500'}>
+                    {l.icon}
+                  </span>
+                  {l.label}
+                  {isActive && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-teal-600 dark:bg-teal-400" />
+                  )}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       {/* Footer */}
       <div className="px-3 py-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        {/* Campana de notificaciones */}
+        <NotificacionesBell />
+
         <button
           onClick={toggleTheme}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 transition-all duration-150"

@@ -26,7 +26,8 @@ function ConfirmModal({ open, onConfirm, onCancel }) {
 
 const FORM_EMPTY = {
   fecha: '', procedimiento: '', plan_quirurgico: '', notas: '', consentimiento: '',
-  protocolo: '', farmacos: '', dosis: '', observaciones_anestesia: ''
+  protocolo: '', farmacos: '', dosis: '', observaciones_anestesia: '',
+  empleados_ids: []
 };
 
 const CAMPOS_CX = [
@@ -62,12 +63,33 @@ export default function Cirugia() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'success' });
   const closeToast = useCallback(() => setToast({ message: '', type: 'success' }), []);
+  const [empleados, setEmpleados] = useState([]);
+  const [cargandoEmpleados, setCargandoEmpleados] = useState(false);
 
   const fetchData = useCallback(() => {
     API.get(`/cirugias/${expedienteId}`).then(r => setCirugias(r.data));
   }, [expedienteId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Cargar lista de empleados al montar el componente
+  useEffect(() => {
+    setCargandoEmpleados(true);
+    API.get('/empleados')
+      .then(r => setEmpleados(r.data))
+      .catch(() => setEmpleados([]))
+      .finally(() => setCargandoEmpleados(false));
+  }, []);
+
+  const toggleEmpleado = (id) => {
+    const idStr = String(id);
+    setForm(prev => ({
+      ...prev,
+      empleados_ids: prev.empleados_ids.includes(idStr)
+        ? prev.empleados_ids.filter(e => e !== idStr)
+        : [...prev.empleados_ids, idStr]
+    }));
+  };
 
   const guardar = async () => {
     setConfirmOpen(false);
@@ -78,7 +100,8 @@ export default function Cirugia() {
         procedimiento: form.procedimiento,
         plan_quirurgico: form.plan_quirurgico,
         notas: form.notas,
-        consentimiento: form.consentimiento
+        consentimiento: form.consentimiento,
+        empleados_ids: form.empleados_ids.map(Number)
       });
       await API.post('/anestesia', {
         cirugia_id: res.data.id,
@@ -137,6 +160,71 @@ export default function Cirugia() {
             <input type="date" value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} className="input max-w-xs" />
           </div>
 
+          {/* ── Selección múltiple de personal médico (N:M) ── */}
+          <div className="mb-5">
+            <label className="input-label mb-2 block">
+              Personal médico participante
+              {form.empleados_ids.length > 0 && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-semibold">
+                  {form.empleados_ids.length} seleccionado{form.empleados_ids.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </label>
+            {cargandoEmpleados ? (
+              <div className="flex items-center gap-2 text-slate-400 text-sm py-2">
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Cargando personal...
+              </div>
+            ) : empleados.length === 0 ? (
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic">No hay empleados registrados en esta clínica.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {empleados.map(emp => {
+                  const selected = form.empleados_ids.includes(String(emp.id));
+                  return (
+                    <label
+                      key={emp.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all select-none
+                        ${selected
+                          ? 'border-red-400 bg-red-50 dark:bg-red-900/20 dark:border-red-500'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-600 hover:bg-red-50/50 dark:hover:bg-red-900/10'
+                        }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={selected}
+                        onChange={() => toggleEmpleado(emp.id)}
+                      />
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors
+                        ${selected
+                          ? 'bg-red-500 border-red-500'
+                          : 'border-slate-300 dark:border-slate-600'
+                        }`}>
+                        {selected && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {emp.nombre} {emp.apellidos}
+                        </p>
+                        {emp.rol_nombre && (
+                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{emp.rol_nombre}</p>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Datos de la cirugía</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             {CAMPOS_CX.map(f => (
@@ -174,6 +262,17 @@ export default function Cirugia() {
               </p>
               {c.procedimiento && <span className="badge-red ml-auto">{c.procedimiento}</span>}
             </div>
+
+            {c.empleados_nombres && (
+              <div className="mb-3 flex items-start gap-2">
+                <svg className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="font-semibold">Personal:</span> {c.empleados_nombres}
+                </p>
+              </div>
+            )}
 
             <div className="divide-y divide-slate-50 dark:divide-slate-800">
               {CAMPOS_CX.filter(f => f.key !== 'procedimiento').map(f => <Field key={f.key} label={f.label} value={c[f.key]} />)}

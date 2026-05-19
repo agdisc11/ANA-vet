@@ -21,7 +21,8 @@ export default function HospitalizacionesRegistro() {
       item.paciente_nombre?.toLowerCase().includes(q) ||
       item.tutor_nombre?.toLowerCase().includes(q) ||
       item.tipo_alta?.toLowerCase().includes(q) ||
-      item.historia_clinica?.toLowerCase().includes(q)
+      item.historia_clinica?.toLowerCase().includes(q) ||
+      item.empleados_nombres?.toLowerCase().includes(q)
     );
   });
 
@@ -55,7 +56,7 @@ export default function HospitalizacionesRegistro() {
         <input
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Buscar por paciente, tutor o estado..."
+          placeholder="Buscar por paciente, tutor, estado o personal médico..."
           className="input pl-9"
         />
       </div>
@@ -64,14 +65,14 @@ export default function HospitalizacionesRegistro() {
         <table className="w-full text-sm">
           <thead className="table-head">
             <tr>
-              {['Ingreso', 'Paciente', 'Tutor', 'Alta', 'Estado', ''].map(h => (
+              {['Ingreso', 'Paciente', 'Tutor', 'Personal médico', 'Alta', 'Estado', ''].map(h => (
                 <th key={h} className="px-4 py-3 text-left">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {cargando ? (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">
                 <div className="flex items-center justify-center gap-2">
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -81,7 +82,7 @@ export default function HospitalizacionesRegistro() {
                 </div>
               </td></tr>
             ) : filtradas.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-12 text-center">
+              <tr><td colSpan={7} className="px-4 py-12 text-center">
                 <div className="text-slate-400 dark:text-slate-500">
                   <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -96,6 +97,18 @@ export default function HospitalizacionesRegistro() {
                 </td>
                 <td className="table-cell font-semibold text-slate-800 dark:text-slate-200">{item.paciente_nombre}</td>
                 <td className="table-cell">{item.tutor_nombre} {item.tutor_apellidos}</td>
+                <td className="table-cell">
+                  {item.empleados_nombres ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                      <svg className="w-3 h-3 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="max-w-[160px] truncate" title={item.empleados_nombres}>{item.empleados_nombres}</span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 dark:text-slate-500 text-xs">Sin asignar</span>
+                  )}
+                </td>
                 <td className="table-cell text-slate-500 dark:text-slate-400 whitespace-nowrap">
                   {item.fecha_alta ? new Date(item.fecha_alta).toLocaleDateString('es-MX') : <span className="badge-yellow">Pendiente</span>}
                 </td>
