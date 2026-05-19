@@ -63,6 +63,22 @@ router.put('/:id', (req, res) => {
   );
 });
 
+router.put('/:id/reasignar', (req, res) => {
+  const { nuevo_tutor_id } = req.body;
+  if (!nuevo_tutor_id) {
+    return res.status(400).json({ error: 'Falta el campo requerido: nuevo_tutor_id' });
+  }
+  db.query(
+    'UPDATE paciente SET tutor_id = ? WHERE id = ?',
+    [nuevo_tutor_id, req.params.id],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Paciente no encontrado' });
+      res.json({ mensaje: 'Tutor reasignado correctamente' });
+    }
+  );
+});
+
 router.delete('/:id', (req, res) => {
   db.query('DELETE FROM paciente WHERE id=?', [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });

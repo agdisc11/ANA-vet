@@ -42,7 +42,6 @@ function AcidBase() {
 
     let trastorno = 'Normal';
     let tipo = '';
-    let compensacion = '';
     let color = 'green';
 
     if (acidosis) {

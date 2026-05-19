@@ -54,6 +54,12 @@ export default function Pacientes() {
   const [pagina, setPagina] = useState(1);
   const [guardando, setGuardando] = useState(false);
 
+  // Estado para el modal de reasignación
+  const [modalReasignar, setModalReasignar] = useState(null); // { id, nombre, tutor }
+  const [tutoresActivos, setTutoresActivos] = useState([]);
+  const [nuevoTutorId, setNuevoTutorId] = useState('');
+  const [reasignando, setReasignando] = useState(false);
+
   const cargar = () => {
     API.get('/pacientes').then(r => setPacientes(r.data));
     API.get('/tutores').then(r => setTutores(r.data));
@@ -117,6 +123,35 @@ export default function Pacientes() {
 
   const razaFinalPreview = form.raza === 'Otro' ? form.raza_custom : form.raza;
   const previewColor = form.especie ? getPreviewColor(form.especie, razaFinalPreview) : null;
+
+  const abrirModalReasignar = (e, paciente) => {
+    e.stopPropagation();
+    API.get('/tutores').then(r => {
+      setTutoresActivos(r.data.filter(t => t.activo !== 0 && t.activo !== false && t.activo !== '0'));
+      setNuevoTutorId('');
+      setModalReasignar({ id: paciente.id, nombre: paciente.nombre, tutor: paciente.tutor });
+    });
+  };
+
+  const cerrarModalReasignar = () => {
+    setModalReasignar(null);
+    setNuevoTutorId('');
+    setTutoresActivos([]);
+  };
+
+  const guardarReasignacion = async () => {
+    if (!nuevoTutorId) { alert('Selecciona un tutor'); return; }
+    setReasignando(true);
+    try {
+      await API.put(`/pacientes/${modalReasignar.id}/reasignar`, { nuevo_tutor_id: parseInt(nuevoTutorId) });
+      cerrarModalReasignar();
+      cargar();
+    } catch (error) {
+      alert('Error al reasignar: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setReasignando(false);
+    }
+  };
 
   return (
     <div className="animate-fade-in">
@@ -287,8 +322,23 @@ export default function Pacientes() {
                 </td>
                 <td className="table-cell">{p.esquemas_preventivos || '—'}</td>
                 <td className="table-cell">{p.tutor}</td>
-                <td className="table-cell">
-                  <span className="text-violet-600 dark:text-violet-400 font-medium text-xs">Ver →</span>
+                <td className="table-cell" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center gap-2">
+                    <span
+                      onClick={() => navigate(`/expediente/${p.id}`)}
+                      className="text-violet-600 dark:text-violet-400 font-medium text-xs cursor-pointer"
+                    >Ver →</span>
+                    <button
+                      onClick={e => abrirModalReasignar(e, p)}
+                      title="Reasignar tutor"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                      Reasignar Tutor
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -308,6 +358,64 @@ export default function Pacientes() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal Reasignar Tutor */}
+      {modalReasignar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-slide-up">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                </div>
+                <h2 className="font-semibold text-slate-800 dark:text-slate-200">Reasignar Tutor</h2>
+              </div>
+              <button onClick={cerrarModalReasignar} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+              Paciente: <span className="font-semibold text-slate-700 dark:text-slate-300">{modalReasignar.nombre}</span>
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              Tutor actual: <span className="font-medium text-slate-600 dark:text-slate-400">{modalReasignar.tutor || '—'}</span>
+            </p>
+
+            <div className="mb-5">
+              <label className="input-label">Nuevo tutor *</label>
+              <select
+                value={nuevoTutorId}
+                onChange={e => setNuevoTutorId(e.target.value)}
+                className="input"
+              >
+                <option value="">Seleccionar tutor activo</option>
+                {tutoresActivos.map(t => (
+                  <option key={t.id} value={t.id}>{t.nombre} {t.apellidos}</option>
+                ))}
+              </select>
+              {tutoresActivos.length === 0 && (
+                <p className="text-xs text-slate-400 mt-1">No hay tutores activos disponibles.</p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={guardarReasignacion}
+                disabled={reasignando || !nuevoTutorId}
+                className="btn-success disabled:opacity-50 flex-1"
+              >
+                {reasignando ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button onClick={cerrarModalReasignar} className="btn-secondary flex-1">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPaginas > 1 && (

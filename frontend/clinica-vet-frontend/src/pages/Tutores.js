@@ -6,6 +6,28 @@ const PAGE_SIZE = 10;
 
 const EMPTY = { nombre: '', apellidos: '', telefono: '', whatsapp: '', correo: '', direccion: '' };
 
+function EstatusBadge({ estatus }) {
+  if (estatus === 'vetado') {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 ml-2">
+        Vetado
+      </span>
+    );
+  }
+  if (estatus === 'inactivo') {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400 ml-2">
+        Inactivo
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 ml-2">
+      Activo
+    </span>
+  );
+}
+
 export default function Tutores() {
   const { search } = useLocation();
   const [tutores, setTutores] = useState([]);
@@ -26,17 +48,31 @@ export default function Tutores() {
 
   useEffect(() => { setPagina(1); }, [busqueda]);
 
-  const eliminar = async (tutor) => {
+  const darDeBaja = async (tutor) => {
     const confirmado = window.confirm(
-      `¿Estás seguro de eliminar este tutor? Se borrarán también todas sus mascotas asociadas en cascada.`
+      `¿Estás seguro de dar de baja a ${tutor.nombre} ${tutor.apellidos}? El tutor quedará inactivo.`
     );
     if (!confirmado) return;
     try {
       await API.delete(`/tutores/${tutor.id}`);
-      setTutores(prev => prev.filter(t => t.id !== tutor.id));
+      setTutores(prev => prev.map(t => t.id === tutor.id ? { ...t, estatus: 'inactivo' } : t));
     } catch (e) {
       console.error(e);
-      alert('Error al eliminar el tutor. Inténtalo de nuevo.');
+      alert('Error al dar de baja al tutor. Inténtalo de nuevo.');
+    }
+  };
+
+  const vetar = async (tutor) => {
+    const confirmado = window.confirm(
+      `¿Estás seguro de vetar a ${tutor.nombre} ${tutor.apellidos}? El tutor quedará vetado y no podrá recibir servicios.`
+    );
+    if (!confirmado) return;
+    try {
+      await API.put(`/tutores/${tutor.id}/vetar`);
+      setTutores(prev => prev.map(t => t.id === tutor.id ? { ...t, estatus: 'vetado' } : t));
+    } catch (e) {
+      console.error(e);
+      alert('Error al vetar al tutor. Inténtalo de nuevo.');
     }
   };
 
@@ -162,22 +198,41 @@ export default function Tutores() {
                 <td className="table-cell">
                   <span className="badge-blue">{t.codigo || '—'}</span>
                 </td>
-                <td className="table-cell font-semibold text-slate-800 dark:text-slate-200">{t.nombre} {t.apellidos}</td>
+                <td className="table-cell font-semibold text-slate-800 dark:text-slate-200">
+                  {t.nombre} {t.apellidos}
+                  <EstatusBadge estatus={t.estatus} />
+                </td>
                 <td className="table-cell">{t.telefono || '—'}</td>
                 <td className="table-cell">{t.whatsapp || '—'}</td>
                 <td className="table-cell">{t.correo || '—'}</td>
                 <td className="table-cell text-slate-500 dark:text-slate-400">{t.direccion || '—'}</td>
                 <td className="table-cell">
-                  <button
-                    onClick={() => eliminar(t)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 rounded-md border border-red-200 dark:border-red-800 hover:bg-red-500/10 transition-colors"
-                    title="Eliminar tutor"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Eliminar
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {/* Dar de Baja */}
+                    <button
+                      onClick={() => darDeBaja(t)}
+                      disabled={t.estatus === 'inactivo' || t.estatus === 'vetado'}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 rounded-md border border-amber-200 dark:border-amber-800 hover:bg-amber-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Dar de baja al tutor"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                      Dar de Baja
+                    </button>
+                    {/* Vetar */}
+                    <button
+                      onClick={() => vetar(t)}
+                      disabled={t.estatus === 'vetado'}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 rounded-md border border-red-200 dark:border-red-800 hover:bg-red-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Vetar tutor"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                      </svg>
+                      Vetar
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

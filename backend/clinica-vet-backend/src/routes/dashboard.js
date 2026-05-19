@@ -13,9 +13,9 @@ router.use(authMiddleware);
 //   - KPIs Globales: ingresos del mes, total pacientes, consultas hoy
 //   - Scorecard de Empleados: actividad por empleado (consultas, cirugías, hospitalizaciones)
 //   - Ingresos Recientes: últimos 5 recibos finalizados con paciente y empleado
-//   - Alertas de Inventario: mock data temporal (tabla aún no creada)
+//   - Alertas de Inventario: productos con stock <= 5
 // ============================================================
-router.get('/clinica', soloClinica, (req, res) => {
+router.get('/clinica', soloClinica, async (req, res) => {
   const clinica_id = req.user.clinica_id;
 
   // ── KPI 1: Total de ingresos del mes (recibos finalizados) ──
@@ -45,6 +45,8 @@ router.get('/clinica', soloClinica, (req, res) => {
   `;
 
   // ── Scorecard de Empleados ──
+  // Todos los sub-selects filtran por e.clinica_id = ?
+  // El JOIN raíz filtra por emp.clinica_id = ?
   const sqlScorecard = `
     SELECT
       emp.id                                          AS empleado_id,
@@ -101,49 +103,57 @@ router.get('/clinica', soloClinica, (req, res) => {
 
   // ── Alertas de Inventario: productos con stock <= 5 ──
   const sqlAlertasInventario = `
-    SELECT id, nombre, stock FROM inventario WHERE clinica_id = ? AND stock <= 5 ORDER BY stock ASC LIMIT 5
+    SELECT id, nombre, stock
+    FROM inventario
+    WHERE clinica_id = ?
+      AND stock <= 5
+    ORDER BY stock ASC
+    LIMIT 5
   `;
 
-  // Ejecutar KPI de ingresos
-  db.query(sqlIngresos, [clinica_id], (err, rowsIngresos) => {
-    if (err) return res.status(500).json({ error: err.message });
-
-    // Ejecutar KPI de pacientes
-    db.query(sqlPacientes, [clinica_id], (err2, rowsPacientes) => {
-      if (err2) return res.status(500).json({ error: err2.message });
-
-      // Ejecutar KPI de consultas hoy
-      db.query(sqlConsultasHoy, [clinica_id], (err3, rowsConsultasHoy) => {
-        if (err3) return res.status(500).json({ error: err3.message });
-
-        // Ejecutar scorecard de empleados
-        db.query(sqlScorecard, [clinica_id, clinica_id, clinica_id, clinica_id], (err4, rowsScorecard) => {
-          if (err4) return res.status(500).json({ error: err4.message });
-
-          // Ejecutar ingresos recientes
-          db.query(sqlIngresosRecientes, [clinica_id], (err5, rowsIngresosRecientes) => {
-            if (err5) return res.status(500).json({ error: err5.message });
-
-            // Ejecutar alertas de inventario
-            db.query(sqlAlertasInventario, [clinica_id], (err6, rowsAlertasInventario) => {
-              if (err6) return res.status(500).json({ error: err6.message });
-
-              res.json({
-                kpis: {
-                  ingresos_mes:    parseFloat(rowsIngresos[0].ingresos_mes),
-                  total_pacientes: rowsPacientes[0].total_pacientes,
-                  consultas_hoy:   rowsConsultasHoy[0].consultas_hoy,
-                },
-                scorecard_empleados:  rowsScorecard,
-                ingresos_recientes:   rowsIngresosRecientes,
-                alertas_inventario:   rowsAlertasInventario,
-              });
-            });
-          });
+  try {
+    // Helper: envuelve db.query en una Promise para poder usar async/await
+    const query = (sql, params) =>
+      new Promise((resolve, reject) => {
+        db.query(sql, params, (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows);
         });
       });
+
+    const [
+      rowsIngresos,
+      rowsPacientes,
+      rowsConsultasHoy,
+      rowsScorecard,
+      rowsIngresosRecientes,
+      rowsAlertasInventario,
+    ] = await Promise.all([
+      query(sqlIngresos,          [clinica_id]),
+      query(sqlPacientes,         [clinica_id]),
+      query(sqlConsultasHoy,      [clinica_id]),
+      query(sqlScorecard,         [clinica_id, clinica_id, clinica_id, clinica_id]),
+      query(sqlIngresosRecientes, [clinica_id]),
+      query(sqlAlertasInventario, [clinica_id]),
+    ]);
+
+    return res.json({
+      kpis: {
+        ingresos_mes:    parseFloat(rowsIngresos[0].ingresos_mes),
+        total_pacientes: rowsPacientes[0].total_pacientes,
+        consultas_hoy:   rowsConsultasHoy[0].consultas_hoy,
+      },
+      scorecard_empleados: rowsScorecard,
+      ingresos_recientes:  rowsIngresosRecientes,
+      alertas_inventario:  rowsAlertasInventario,
     });
-  });
+  } catch (err) {
+    console.error('[Dashboard /clinica] Error en consulta SQL:', err);
+    return res.status(500).json({
+      error: 'Error interno del servidor',
+      detalles: err.message,
+    });
+  }
 });
 
 // ============================================================
@@ -152,11 +162,12 @@ router.get('/clinica', soloClinica, (req, res) => {
 // Devuelve:
 //   - Mis Tareas de Hoy: consultas y cirugías asignadas al empleado para hoy
 // ============================================================
-router.get('/empleado', soloEmpleado, (req, res) => {
+router.get('/empleado', soloEmpleado, async (req, res) => {
   const empleado_id = req.user.id;
   const clinica_id  = req.user.clinica_id;
 
   // ── Consultas asignadas al empleado para hoy ──
+  // Doble filtro: empleado_id + clinica_id (multi-tenant)
   const sqlConsultasHoy = `
     SELECT COUNT(*) AS consultas_hoy
     FROM consulta c
@@ -167,6 +178,7 @@ router.get('/empleado', soloEmpleado, (req, res) => {
   `;
 
   // ── Cirugías asignadas al empleado para hoy ──
+  // Doble filtro: empleado_id + clinica_id (multi-tenant)
   const sqlCirugiasHoy = `
     SELECT COUNT(*) AS cirugias_hoy
     FROM cirugia_empleados ce
@@ -177,23 +189,35 @@ router.get('/empleado', soloEmpleado, (req, res) => {
       AND ci.fecha       = CURDATE()
   `;
 
-  // Ejecutar consultas hoy
-  db.query(sqlConsultasHoy, [empleado_id, clinica_id], (err, rowsConsultas) => {
-    if (err) return res.status(500).json({ error: err.message });
-
-    // Ejecutar cirugías hoy
-    db.query(sqlCirugiasHoy, [empleado_id, clinica_id], (err2, rowsCirugias) => {
-      if (err2) return res.status(500).json({ error: err2.message });
-
-      res.json({
-        tareas_hoy: {
-          consultas_hoy: rowsConsultas[0].consultas_hoy,
-          cirugias_hoy:  rowsCirugias[0].cirugias_hoy,
-          total_tareas:  rowsConsultas[0].consultas_hoy + rowsCirugias[0].cirugias_hoy,
-        },
+  try {
+    // Helper: envuelve db.query en una Promise para poder usar async/await
+    const query = (sql, params) =>
+      new Promise((resolve, reject) => {
+        db.query(sql, params, (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows);
+        });
       });
+
+    const [rowsConsultas, rowsCirugias] = await Promise.all([
+      query(sqlConsultasHoy, [empleado_id, clinica_id]),
+      query(sqlCirugiasHoy,  [empleado_id, clinica_id]),
+    ]);
+
+    return res.json({
+      tareas_hoy: {
+        consultas_hoy: rowsConsultas[0].consultas_hoy,
+        cirugias_hoy:  rowsCirugias[0].cirugias_hoy,
+        total_tareas:  rowsConsultas[0].consultas_hoy + rowsCirugias[0].cirugias_hoy,
+      },
     });
-  });
+  } catch (err) {
+    console.error('[Dashboard /empleado] Error en consulta SQL:', err);
+    return res.status(500).json({
+      error: 'Error interno del servidor',
+      detalles: err.message,
+    });
+  }
 });
 
 module.exports = router;

@@ -9,7 +9,7 @@ import API from '../api';
 // ─────────────────────────────────────────────────────────────
 
 export default function Inventario() {
-  const { tipo, user } = useAuth();
+  const { tipo } = useAuth();
   const esClinica = tipo === 'clinica';
 
   // ── Estado principal ──────────────────────────────────────

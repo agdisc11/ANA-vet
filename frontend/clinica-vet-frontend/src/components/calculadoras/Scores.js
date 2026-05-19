@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 // ─── Datos: Pain Score Colorado (0–4) ────────────────────────────────────────
 const PAIN_LEVELS = [
