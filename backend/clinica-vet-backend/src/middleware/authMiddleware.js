@@ -45,4 +45,19 @@ function soloEmpleado(req, res, next) {
   next();
 }
 
-module.exports = { authMiddleware, soloClinica, soloEmpleado };
+/**
+ * Middleware que permite acceso a tipo 'clinica' (Admin)
+ * O a tipo 'empleado' con rol_id 2 (Veterinario).
+ */
+function clinicaOVeterinario(req, res, next) {
+  if (!req.user) {
+    return res.status(403).json({ error: 'Acceso denegado.' });
+  }
+  const { tipo, rol_id } = req.user;
+  if (tipo === 'clinica' || (tipo === 'empleado' && Number(rol_id) === 2)) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Acceso restringido a Administrador o Veterinario.' });
+}
+
+module.exports = { authMiddleware, soloClinica, soloEmpleado, clinicaOVeterinario };

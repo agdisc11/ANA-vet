@@ -254,17 +254,15 @@ export default function Inventario() {
                     </td>
                   </tr>
                 ) : (
-                  solicitudes.map((s) => (
-                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">{s.producto_nombre}</td>
-                      <td className="px-5 py-3 text-slate-500 dark:text-slate-400">{s.notas || '—'}</td>
+                  solicitudes.map((solicitud) => (
+                    <tr key={solicitud.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">{solicitud.producto_nombre}</td>
+                      <td className="px-5 py-3 text-slate-500 dark:text-slate-400">{solicitud.notas || '—'}</td>
                       <td className="px-5 py-3 text-slate-500 dark:text-slate-400">
-                        {s.empleado_nombre
-                          ? `${s.empleado_nombre} ${s.empleado_apellidos || ''}`.trim()
-                          : 'Administrador'}
+                        {solicitud.solicitado_por || 'Administrador'}
                       </td>
                       <td className="px-5 py-3 text-slate-400 dark:text-slate-500 text-xs">
-                        {s.created_at ? new Date(s.created_at).toLocaleDateString('es-MX') : '—'}
+                        {solicitud.creado_en ? new Date(solicitud.creado_en).toLocaleDateString('es-MX') : '—'}
                       </td>
                     </tr>
                   ))

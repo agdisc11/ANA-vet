@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import API from '../api';
+import { useAuth } from '../context/AuthContext';
 
 const PAGE_SIZE = 10;
 
@@ -30,6 +31,11 @@ function EstatusBadge({ estatus }) {
 
 export default function Tutores() {
   const { search } = useLocation();
+  const { tipo, user } = useAuth();
+
+  // Puede vetar/dar de baja: Administrador (tipo 'clinica') o Veterinario (tipo 'empleado' con rol_id 2)
+  const puedeGestionar = tipo === 'clinica' || (tipo === 'empleado' && Number(user?.rol_id) === 2);
+
   const [tutores, setTutores] = useState([]);
   const [form, setForm] = useState(EMPTY);
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -208,30 +214,34 @@ export default function Tutores() {
                 <td className="table-cell text-slate-500 dark:text-slate-400">{t.direccion || '—'}</td>
                 <td className="table-cell">
                   <div className="flex items-center gap-1.5">
-                    {/* Dar de Baja */}
-                    <button
-                      onClick={() => darDeBaja(t)}
-                      disabled={t.estatus === 'inactivo' || t.estatus === 'vetado'}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 rounded-md border border-amber-200 dark:border-amber-800 hover:bg-amber-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      title="Dar de baja al tutor"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                      </svg>
-                      Dar de Baja
-                    </button>
-                    {/* Vetar */}
-                    <button
-                      onClick={() => vetar(t)}
-                      disabled={t.estatus === 'vetado'}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 rounded-md border border-red-200 dark:border-red-800 hover:bg-red-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      title="Vetar tutor"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                      </svg>
-                      Vetar
-                    </button>
+                    {/* Dar de Baja — solo visible para Admin o Veterinario */}
+                    {puedeGestionar && (
+                      <button
+                        onClick={() => darDeBaja(t)}
+                        disabled={t.estatus === 'inactivo' || t.estatus === 'vetado'}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 rounded-md border border-amber-200 dark:border-amber-800 hover:bg-amber-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Dar de baja al tutor"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                        Dar de Baja
+                      </button>
+                    )}
+                    {/* Vetar — solo visible para Admin o Veterinario */}
+                    {puedeGestionar && (
+                      <button
+                        onClick={() => vetar(t)}
+                        disabled={t.estatus === 'vetado'}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 rounded-md border border-red-200 dark:border-red-800 hover:bg-red-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Vetar tutor"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        </svg>
+                        Vetar
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
