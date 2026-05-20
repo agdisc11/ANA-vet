@@ -46,7 +46,15 @@ router.post('/', (req, res) => {
     items = [],
   } = req.body;
 
-  if (!paciente_id || !fecha) {
+  // Aceptar fecha en formato DD/MM/YYYY (enviada por el helper hoy() del frontend)
+  // o en formato ISO YYYY-MM-DD. Normalizamos a YYYY-MM-DD para MySQL.
+  let fechaNormalizada = fecha;
+  if (fecha && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+    const [d, m, y] = fecha.split('/');
+    fechaNormalizada = `${y}-${m}-${d}`;
+  }
+
+  if (!paciente_id || !fechaNormalizada) {
     return res.status(400).json({ error: 'Campos requeridos: paciente_id, fecha' });
   }
 
@@ -80,7 +88,7 @@ router.post('/', (req, res) => {
       paciente_id,
       expediente_id || null,
       empleado_id || null,
-      fecha,
+      fechaNormalizada,
       motivo_consulta || null,
       total.toFixed(2),
     ],

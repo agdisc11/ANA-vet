@@ -443,8 +443,9 @@ export default function Recibo() {
         setExpediente(expEncontrado || null);
 
         // Intentar cargar la última consulta del expediente para obtener motivo
+        // El backend espera solo /:expediente_id (no /:pacienteId/:expedienteId)
         try {
-          const resConsultas = await API.get(`/consultas/${pacienteId}/${expedienteId}`);
+          const resConsultas = await API.get(`/consultas/${expedienteId}`);
           if (resConsultas.data && resConsultas.data.length > 0) {
             setConsulta(resConsultas.data[resConsultas.data.length - 1]);
           }
@@ -452,15 +453,19 @@ export default function Recibo() {
           // No hay consultas, no es error crítico
         }
 
-        // Intentar cargar recibo existente (borrador)
+        // Intentar cargar recibos existentes del paciente (borrador)
+        // El backend espera GET /api/recibos/:paciente_id (un solo parámetro)
         try {
-          const resRecibo = await API.get(`/recibos/${pacienteId}/${expedienteId}`);
-          if (resRecibo.data && resRecibo.data.servicios) {
-            const mapa = {};
-            resRecibo.data.servicios.forEach((s) => {
-              mapa[s.id] = true;
-            });
-            setSeleccionados(mapa);
+          const resRecibo = await API.get(`/recibos/${pacienteId}`);
+          if (resRecibo.data && Array.isArray(resRecibo.data)) {
+            // Buscar el borrador más reciente para este expediente
+            const borrador = resRecibo.data.find(
+              (r) => String(r.expediente_id) === String(expedienteId) && r.status === 'borrador'
+            );
+            if (borrador) {
+              // No hay servicios del catálogo local en el borrador guardado,
+              // así que simplemente ignoramos (el usuario reselecciona)
+            }
           }
         } catch (_) {
           // No hay recibo previo
@@ -487,34 +492,46 @@ export default function Recibo() {
   }, []);
 
   // ── Construir payload ──────────────────────────────────────
-  const buildPayload = (estado) => ({
-    paciente_id: pacienteId,
-    expediente_id: expedienteId,
-    estado,
-    fecha: hoy(),
-    servicios: serviciosSeleccionados.map((s) => ({
-      id: s.id,
-      nombre: s.nombre,
-      precio: s.precio,
+  // El backend POST /api/recibos espera:
+  //   { paciente_id, expediente_id, fecha, motivo_consulta?, items: [{ nombre_servicio, precio_unitario, cantidad }] }
+  // El campo "status" se fija siempre en 'borrador' en el INSERT; para finalizar
+  // se debe usar PUT /api/recibos/:id con { status: 'finalizado' }.
+  // Aquí enviamos todo en el body (sin parámetros en la URL).
+  const buildPayload = () => ({
+    paciente_id: Number(pacienteId),
+    expediente_id: Number(expedienteId),
+    fecha: new Date().toISOString().slice(0, 10), // formato YYYY-MM-DD que acepta MySQL
+    motivo_consulta: consulta?.motivo || consulta?.motivo_consulta || null,
+    items: serviciosSeleccionados.map((s) => ({
+      nombre_servicio: s.nombre,
+      precio_unitario: s.precio,
+      cantidad: 1,
     })),
-    total,
   });
 
   // ── Guardar borrador ───────────────────────────────────────
+  // POST /api/recibos  →  crea siempre con status 'borrador'
   const guardarBorrador = async () => {
+    if (serviciosSeleccionados.length === 0) {
+      setMensaje({ tipo: 'error', texto: 'Agrega al menos un servicio antes de guardar.' });
+      return;
+    }
     setGuardando(true);
     setMensaje(null);
     try {
-      await API.post('/recibos', buildPayload('borrador'));
+      await API.post('/recibos', buildPayload());
       setMensaje({ tipo: 'ok', texto: 'Borrador guardado correctamente.' });
     } catch (err) {
-      setMensaje({ tipo: 'error', texto: 'Error al guardar el borrador.' });
+      const detalle = err?.response?.data?.error || 'Error al guardar el borrador.';
+      setMensaje({ tipo: 'error', texto: detalle });
     } finally {
       setGuardando(false);
     }
   };
 
   // ── Finalizar recibo ───────────────────────────────────────
+  // 1) POST /api/recibos  →  crea el recibo (status: borrador)
+  // 2) PUT  /api/recibos/:id  →  cambia status a 'finalizado'
   const finalizarRecibo = async () => {
     if (serviciosSeleccionados.length === 0) {
       setMensaje({ tipo: 'error', texto: 'Agrega al menos un servicio antes de finalizar.' });
@@ -523,10 +540,17 @@ export default function Recibo() {
     setFinalizando(true);
     setMensaje(null);
     try {
-      await API.post('/recibos', buildPayload('finalizado'));
+      // Paso 1: crear el recibo
+      const { data } = await API.post('/recibos', buildPayload());
+      const reciboId = data.recibo_id;
+
+      // Paso 2: marcarlo como finalizado
+      await API.put(`/recibos/${reciboId}`, { status: 'finalizado' });
+
       setMensaje({ tipo: 'ok', texto: '¡Recibo finalizado exitosamente!' });
     } catch (err) {
-      setMensaje({ tipo: 'error', texto: 'Error al finalizar el recibo.' });
+      const detalle = err?.response?.data?.error || 'Error al finalizar el recibo.';
+      setMensaje({ tipo: 'error', texto: detalle });
     } finally {
       setFinalizando(false);
     }
