@@ -33,7 +33,7 @@ const calcularEdad = (fechaNacimiento) => {
 // ─────────────────────────────────────────────────────────────
 // Generador de PDF FORM-030
 // ─────────────────────────────────────────────────────────────
-const generarPDF = ({ paciente, expedienteId, consulta, serviciosSeleccionados, total }) => {
+const generarPDF = ({ paciente, expedienteId, consulta, serviciosSeleccionados, total, catalogo }) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 15;

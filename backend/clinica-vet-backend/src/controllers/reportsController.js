@@ -1,6 +1,6 @@
 const PDFDocument = require('pdfkit');
 const path = require('path');
-const db = require('../db/connection');
+const { db } = require('../db/connection');
 
 const LOGO_PATH = path.join(__dirname, '../assets/logo_clinica.png');
 

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../db/connection');
+const { db } = require('../db/connection');
 const { authMiddleware, soloClinica, JWT_SECRET, SALT_ROUNDS } = require('../middleware/authMiddleware');
 
 // ============================================================

@@ -35,5 +35,4 @@ function query(sql, params) {
   });
 }
 
-module.exports = db;
-module.exports.query = query;
+module.exports = { db, query };
