@@ -513,7 +513,7 @@ export default function Recibo() {
 
   // ── Exportar PDF ───────────────────────────────────────────
   const exportarPDF = () => {
-    generarPDF({ paciente, expedienteId, consulta, serviciosSeleccionados, total });
+    generarPDF({ paciente, expedienteId, consulta, serviciosSeleccionados, total, catalogo });
   };
 
   // ── Render ─────────────────────────────────────────────────

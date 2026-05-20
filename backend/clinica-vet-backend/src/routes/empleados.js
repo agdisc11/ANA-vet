@@ -80,9 +80,9 @@ router.post('/login', (req, res) => {
 // ============================================================
 // GET /api/empleados
 // Lista todos los empleados de la clínica autenticada
-// Requiere: Bearer token de tipo 'clinica'
+// Requiere: Bearer token autenticado (clinica o empleado)
 // ============================================================
-router.get('/', authMiddleware, soloClinica, (req, res) => {
+router.get('/', authMiddleware, (req, res) => {
   const sql = `
     SELECT e.id, e.nombre, e.apellidos, e.email, e.telefono, e.activo, e.created_at,
            r.id AS rol_id, r.nombre AS rol_nombre
