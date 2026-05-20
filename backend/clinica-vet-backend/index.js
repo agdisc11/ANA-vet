@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const db = require('./src/db/connection');
+const errorHandler = require('./src/middleware/errorHandler');
 
 app.use(cors());
 app.use(express.json());
@@ -44,6 +45,9 @@ app.get('/api/stats', (req, res) => {
     res.json(rows[0]);
   });
 });
+
+// ── Middleware global de errores (debe ir al final) ──────────
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));

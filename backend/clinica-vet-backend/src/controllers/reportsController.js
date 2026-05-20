@@ -90,16 +90,18 @@ const addTable = (doc, columns, rows, options = {}) => {
 
 // Reporte de Pacientes
 exports.reportePacientes = (req, res) => {
+  const clinicaId = req.user.clinica_id;
   const query = `
     SELECT p.id, p.nombre, p.especie, p.raza,
            TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS edad,
            t.nombre as tutor_nombre, t.telefono
     FROM paciente p
     LEFT JOIN tutor t ON p.tutor_id = t.id
+    WHERE p.clinica_id = ?
     ORDER BY p.nombre
   `;
 
-  db.query(query, (err, rows) => {
+  db.query(query, [clinicaId], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -144,16 +146,18 @@ exports.reportePacientes = (req, res) => {
 
 // Reporte de Tutores
 exports.reporteTutores = (req, res) => {
+  const clinicaId = req.user.clinica_id;
   const query = `
     SELECT t.id, t.nombre, t.apellidos, t.telefono, t.correo, t.direccion,
            COUNT(p.id) as total_pacientes
     FROM tutor t
     LEFT JOIN paciente p ON p.tutor_id = t.id
+    WHERE t.clinica_id = ?
     GROUP BY t.id
     ORDER BY t.nombre
   `;
 
-  db.query(query, (err, rows) => {
+  db.query(query, [clinicaId], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -197,6 +201,7 @@ exports.reporteTutores = (req, res) => {
 
 // Reporte de Hospitalizaciones
 exports.reporteHospitalizaciones = (req, res) => {
+  const clinicaId = req.user.clinica_id;
   const query = `
     SELECT h.id, h.fecha_ingreso, h.tipo_alta, h.historia_clinica,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
@@ -204,11 +209,12 @@ exports.reporteHospitalizaciones = (req, res) => {
     LEFT JOIN expediente e ON h.expediente_id = e.id
     LEFT JOIN paciente p ON e.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
+    WHERE e.clinica_id = ?
     ORDER BY h.fecha_ingreso DESC
     LIMIT 50
   `;
 
-  db.query(query, (err, rows) => {
+  db.query(query, [clinicaId], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -251,6 +257,7 @@ exports.reporteHospitalizaciones = (req, res) => {
 
 // Reporte de Cirugías
 exports.reporteCirugias = (req, res) => {
+  const clinicaId = req.user.clinica_id;
   const query = `
     SELECT c.id, c.fecha, c.procedimiento, c.notas,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
@@ -258,11 +265,12 @@ exports.reporteCirugias = (req, res) => {
     LEFT JOIN expediente e ON c.expediente_id = e.id
     LEFT JOIN paciente p ON e.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
+    WHERE e.clinica_id = ?
     ORDER BY c.fecha DESC
     LIMIT 50
   `;
 
-  db.query(query, (err, rows) => {
+  db.query(query, [clinicaId], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -305,6 +313,7 @@ exports.reporteCirugias = (req, res) => {
 
 // Reporte de Consultas — BUG FIXED
 exports.reporteConsultas = (req, res) => {
+  const clinicaId = req.user.clinica_id;
   // Bug fix: la tabla consulta NO tiene dx_definitivo; ese campo está en expediente.
   // Se usa dx_presuntivo de consulta y se hace JOIN con expediente para dx_definitivo.
   const query = `
@@ -316,11 +325,12 @@ exports.reporteConsultas = (req, res) => {
     LEFT JOIN expediente e ON c.expediente_id = e.id
     LEFT JOIN paciente p ON e.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
+    WHERE e.clinica_id = ?
     ORDER BY c.fecha DESC
     LIMIT 50
   `;
 
-  db.query(query, (err, rows) => {
+  db.query(query, [clinicaId], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -364,17 +374,19 @@ exports.reporteConsultas = (req, res) => {
 
 // Reporte de Vacunas
 exports.reporteVacunas = (req, res) => {
+  const clinicaId = req.user.clinica_id;
   const query = `
     SELECT v.id, v.fecha_aplicacion, v.nombre, v.proxima_dosis,
            p.nombre as paciente_nombre, t.nombre as tutor_nombre
     FROM vacuna v
     LEFT JOIN paciente p ON v.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
+    WHERE p.clinica_id = ?
     ORDER BY v.fecha_aplicacion DESC
     LIMIT 50
   `;
 
-  db.query(query, (err, rows) => {
+  db.query(query, [clinicaId], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -418,16 +430,17 @@ exports.reporteVacunas = (req, res) => {
 
 // Reporte General Responsivo (Resumen Ejecutivo)
 exports.reporteGeneral = (req, res) => {
+  const clinicaId = req.user.clinica_id;
   const sql = `
     SELECT
-      (SELECT COUNT(*) FROM paciente) AS pacientes,
-      (SELECT COUNT(*) FROM hospitalizacion) AS hospitalizaciones,
-      (SELECT COUNT(*) FROM cirugia) AS cirugias,
-      (SELECT COUNT(*) FROM consulta) AS consultas,
-      (SELECT COUNT(*) FROM vacuna) AS vacunas,
-      (SELECT COUNT(*) FROM tutor) AS tutores
+      (SELECT COUNT(*) FROM paciente WHERE clinica_id = ?) AS pacientes,
+      (SELECT COUNT(*) FROM hospitalizacion h JOIN expediente e ON h.expediente_id = e.id WHERE e.clinica_id = ?) AS hospitalizaciones,
+      (SELECT COUNT(*) FROM cirugia c JOIN expediente e ON c.expediente_id = e.id WHERE e.clinica_id = ?) AS cirugias,
+      (SELECT COUNT(*) FROM consulta c JOIN expediente e ON c.expediente_id = e.id WHERE e.clinica_id = ?) AS consultas,
+      (SELECT COUNT(*) FROM vacuna v JOIN paciente p ON v.paciente_id = p.id WHERE p.clinica_id = ?) AS vacunas,
+      (SELECT COUNT(*) FROM tutor WHERE clinica_id = ?) AS tutores
   `;
-  db.query(sql, (err, rows) => {
+  db.query(sql, [clinicaId, clinicaId, clinicaId, clinicaId, clinicaId, clinicaId], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     generateGeneralReport(res, rows[0]);
   });
@@ -480,6 +493,7 @@ const generateGeneralReport = (res, stats) => {
 // Reporte de Expedientes Médicos (por paciente)
 exports.reporteExpediente = (req, res) => {
   const { paciente_id } = req.params;
+  const clinicaId = req.user.clinica_id;
 
   const query = `
     SELECT p.id, p.nombre, p.especie, p.raza,
@@ -490,11 +504,11 @@ exports.reporteExpediente = (req, res) => {
     FROM expediente e
     LEFT JOIN paciente p ON e.paciente_id = p.id
     LEFT JOIN tutor t ON p.tutor_id = t.id
-    WHERE p.id = ?
+    WHERE p.id = ? AND e.clinica_id = ?
     LIMIT 1
   `;
 
-  db.query(query, [paciente_id], (err, rows) => {
+  db.query(query, [paciente_id, clinicaId], (err, rows) => {
     if (err || rows.length === 0) {
       return res.status(404).json({ error: 'Expediente no encontrado' });
     }

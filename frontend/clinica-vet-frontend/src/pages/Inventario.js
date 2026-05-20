@@ -47,8 +47,9 @@ export default function Inventario() {
     try {
       const { data } = await API.get('/inventario/solicitudes');
       setSolicitudes(data);
-    } catch {
-      // silencioso — no crítico
+    } catch (e) {
+      // No crítico: se muestra vacío sin bloquear la vista principal
+      console.warn('No se pudieron cargar las solicitudes:', e.message);
     }
   }, [esClinica]);
 

@@ -21,11 +21,17 @@ export default function Expediente() {
   const [expedientes, setExpedientes] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [creando, setCreando] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setSelectedAnimal(null);
-    API.get(`/pacientes/${pacienteId}`).then(r => setPaciente(r.data));
-    API.get(`/expedientes/${pacienteId}`).then(r => setExpedientes(r.data));
+    setError(null);
+    API.get(`/pacientes/${pacienteId}`)
+      .then(r => setPaciente(r.data))
+      .catch(err => setError(err.response?.data?.error || 'Error al cargar los datos del paciente'));
+    API.get(`/expedientes/${pacienteId}`)
+      .then(r => setExpedientes(r.data))
+      .catch(err => setError(err.response?.data?.error || 'Error al cargar los expedientes'));
   }, [pacienteId, setSelectedAnimal]);
 
   useEffect(() => {
@@ -38,10 +44,15 @@ export default function Expediente() {
 
   const guardar = async () => {
     setCreando(true);
+    setError(null);
     try {
       await API.post('/expedientes', { paciente_id: pacienteId });
       setMostrarForm(false);
-      API.get(`/expedientes/${pacienteId}`).then(r => setExpedientes(r.data));
+      API.get(`/expedientes/${pacienteId}`)
+        .then(r => setExpedientes(r.data))
+        .catch(err => setError(err.response?.data?.error || 'Error al recargar expedientes'));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al crear el expediente');
     } finally {
       setCreando(false);
     }
@@ -49,6 +60,24 @@ export default function Expediente() {
 
   return (
     <div className="animate-fade-in">
+      {/* Error banner */}
+      {error && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
+          <svg className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300">Ocurrió un error</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{error}</p>
+          </div>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 dark:hover:text-red-300 flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Back */}
       <button onClick={() => navigate('/pacientes')} className="back-link">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/connection');
+const { query } = require('../db/connection');
 const { authMiddleware, soloClinica, soloEmpleado } = require('../middleware/authMiddleware');
 
 // Protege TODAS las rutas con authMiddleware
@@ -112,15 +112,6 @@ router.get('/clinica', soloClinica, async (req, res) => {
   `;
 
   try {
-    // Helper: envuelve db.query en una Promise para poder usar async/await
-    const query = (sql, params) =>
-      new Promise((resolve, reject) => {
-        db.query(sql, params, (err, rows) => {
-          if (err) return reject(err);
-          resolve(rows);
-        });
-      });
-
     const [
       rowsIngresos,
       rowsPacientes,
@@ -190,15 +181,6 @@ router.get('/empleado', soloEmpleado, async (req, res) => {
   `;
 
   try {
-    // Helper: envuelve db.query en una Promise para poder usar async/await
-    const query = (sql, params) =>
-      new Promise((resolve, reject) => {
-        db.query(sql, params, (err, rows) => {
-          if (err) return reject(err);
-          resolve(rows);
-        });
-      });
-
     const [rowsConsultas, rowsCirugias] = await Promise.all([
       query(sqlConsultasHoy, [empleado_id, clinica_id]),
       query(sqlCirugiasHoy,  [empleado_id, clinica_id]),

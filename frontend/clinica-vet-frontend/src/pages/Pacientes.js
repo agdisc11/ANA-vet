@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import API from '../api';
-import { breedColorMap as razaColors, speciesColorMap as especieColors } from '../SelectedAnimalContext';
+import { breedColorMap as razaColors, speciesColorMap as especieColors, stringToColor } from '../SelectedAnimalContext';
 
 const especieOptions = [
   { value: '', label: 'Seleccionar especie' },
@@ -21,13 +21,6 @@ const razaOptions = {
   Reptil: ['Iguana', 'Serpiente', 'Tortuga', 'Camaleón', 'Gecko', 'Otro'],
   Caballo: ['Pura Sangre', 'Andaluz', 'Cuarto de Milla', 'Criollo', 'Frisón', 'Otro'],
 };
-
-function stringToColor(value) {
-  const str = value?.trim().toLowerCase() || '';
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  return `hsl(${Math.abs(hash % 360)}, 60%, 50%)`;
-}
 
 function getPreviewColor(especie, raza) {
   if (!raza) return especieColors[especie?.toLowerCase()] || '#4B5563';
@@ -53,6 +46,7 @@ export default function Pacientes() {
   const [busqueda, setBusqueda] = useState('');
   const [pagina, setPagina] = useState(1);
   const [guardando, setGuardando] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   // Estado para el modal de reasignación
   const [modalReasignar, setModalReasignar] = useState(null); // { id, nombre, tutor }
@@ -61,8 +55,12 @@ export default function Pacientes() {
   const [reasignando, setReasignando] = useState(false);
 
   const cargar = () => {
-    API.get('/pacientes').then(r => setPacientes(r.data));
-    API.get('/tutores').then(r => setTutores(r.data));
+    API.get('/pacientes')
+      .then(r => setPacientes(r.data))
+      .catch(err => setErrorMsg(err.response?.data?.error || 'Error al cargar pacientes'));
+    API.get('/tutores')
+      .then(r => setTutores(r.data))
+      .catch(err => setErrorMsg(err.response?.data?.error || 'Error al cargar tutores'));
   };
 
   useEffect(() => {
@@ -126,11 +124,13 @@ export default function Pacientes() {
 
   const abrirModalReasignar = (e, paciente) => {
     e.stopPropagation();
-    API.get('/tutores').then(r => {
-      setTutoresActivos(r.data.filter(t => t.activo !== 0 && t.activo !== false && t.activo !== '0'));
-      setNuevoTutorId('');
-      setModalReasignar({ id: paciente.id, nombre: paciente.nombre, tutor: paciente.tutor });
-    });
+    API.get('/tutores')
+      .then(r => {
+        setTutoresActivos(r.data.filter(t => t.activo !== 0 && t.activo !== false && t.activo !== '0'));
+        setNuevoTutorId('');
+        setModalReasignar({ id: paciente.id, nombre: paciente.nombre, tutor: paciente.tutor });
+      })
+      .catch(err => setErrorMsg(err.response?.data?.error || 'Error al cargar tutores para reasignación'));
   };
 
   const cerrarModalReasignar = () => {
@@ -155,6 +155,24 @@ export default function Pacientes() {
 
   return (
     <div className="animate-fade-in">
+      {/* Error banner */}
+      {errorMsg && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3">
+          <svg className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300">Ocurrió un error</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{errorMsg}</p>
+          </div>
+          <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-600 dark:hover:text-red-300 flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="page-header">
         <div>

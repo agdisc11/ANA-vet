@@ -20,4 +20,20 @@ db.getConnection((err, connection) => {
   }
 });
 
+/**
+ * Promise wrapper for db.query — allows async/await usage.
+ * @param {string} sql
+ * @param {Array}  params
+ * @returns {Promise<Array>}
+ */
+function query(sql, params) {
+  return new Promise((resolve, reject) => {
+    db.query(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+}
+
 module.exports = db;
+module.exports.query = query;

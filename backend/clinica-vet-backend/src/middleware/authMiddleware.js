@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'saas_vet_secret_2026';
+const SALT_ROUNDS = 10;
 
 /**
  * Middleware de autenticación JWT.
@@ -60,4 +61,4 @@ function clinicaOVeterinario(req, res, next) {
   return res.status(403).json({ error: 'Acceso restringido a Administrador o Veterinario.' });
 }
 
-module.exports = { authMiddleware, soloClinica, soloEmpleado, clinicaOVeterinario };
+module.exports = { authMiddleware, soloClinica, soloEmpleado, clinicaOVeterinario, JWT_SECRET, SALT_ROUNDS };

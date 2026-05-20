@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const reportsController = require('../controllers/reportsController');
+const { authMiddleware } = require('../middleware/authMiddleware');
+
+// Protege todas las rutas con autenticación
+router.use(authMiddleware);
 
 // Rutas para generar reportes en PDF
 router.get('/pacientes', reportsController.reportePacientes);

@@ -4,86 +4,6 @@ import API from '../api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// ─────────────────────────────────────────────────────────────
-// Catálogo de servicios agrupados por categoría
-// ─────────────────────────────────────────────────────────────
-const CATALOGO = [
-  {
-    categoria: 'Consultas',
-    servicios: [
-      { id: 'c1', nombre: 'Consulta general', precio: 350 },
-      { id: 'c2', nombre: 'Consulta de urgencia', precio: 550 },
-      { id: 'c3', nombre: 'Consulta de seguimiento', precio: 250 },
-      { id: 'c4', nombre: 'Consulta especializada', precio: 700 },
-    ],
-  },
-  {
-    categoria: 'Laboratorio',
-    servicios: [
-      { id: 'l1', nombre: 'Biometría hemática', precio: 280 },
-      { id: 'l2', nombre: 'Química sanguínea (6 elementos)', precio: 350 },
-      { id: 'l3', nombre: 'Urianálisis', precio: 200 },
-      { id: 'l4', nombre: 'Coproscópico', precio: 180 },
-      { id: 'l5', nombre: 'Cultivo y antibiograma', precio: 600 },
-    ],
-  },
-  {
-    categoria: 'Imagen',
-    servicios: [
-      { id: 'i1', nombre: 'Radiografía (1 proyección)', precio: 400 },
-      { id: 'i2', nombre: 'Radiografía (2 proyecciones)', precio: 650 },
-      { id: 'i3', nombre: 'Ultrasonido abdominal', precio: 800 },
-      { id: 'i4', nombre: 'Ecocardiograma', precio: 1200 },
-    ],
-  },
-  {
-    categoria: 'Vacunas',
-    servicios: [
-      { id: 'v1', nombre: 'Vacuna séxtuple canina', precio: 320 },
-      { id: 'v2', nombre: 'Vacuna antirrábica', precio: 180 },
-      { id: 'v3', nombre: 'Vacuna triple felina', precio: 280 },
-      { id: 'v4', nombre: 'Vacuna leucemia felina', precio: 350 },
-    ],
-  },
-  {
-    categoria: 'Cirugía',
-    servicios: [
-      { id: 'cir1', nombre: 'Castración canino macho', precio: 1800 },
-      { id: 'cir2', nombre: 'Ovariohisterectomía canina', precio: 2500 },
-      { id: 'cir3', nombre: 'Castración felino macho', precio: 1200 },
-      { id: 'cir4', nombre: 'Ovariohisterectomía felina', precio: 1800 },
-      { id: 'cir5', nombre: 'Cirugía de tejidos blandos', precio: 3500 },
-    ],
-  },
-  {
-    categoria: 'Hospitalización',
-    servicios: [
-      { id: 'h1', nombre: 'Hospitalización (por día)', precio: 600 },
-      { id: 'h2', nombre: 'Terapia intensiva (por día)', precio: 1200 },
-      { id: 'h3', nombre: 'Fluidoterapia IV', precio: 350 },
-      { id: 'h4', nombre: 'Oxigenoterapia (por hora)', precio: 200 },
-    ],
-  },
-  {
-    categoria: 'Medicamentos',
-    servicios: [
-      { id: 'm1', nombre: 'Antibiótico inyectable', precio: 150 },
-      { id: 'm2', nombre: 'Antiparasitario externo', precio: 120 },
-      { id: 'm3', nombre: 'Antiparasitario interno', precio: 100 },
-      { id: 'm4', nombre: 'Analgésico/antiinflamatorio', precio: 130 },
-      { id: 'm5', nombre: 'Suero fisiológico 500ml', precio: 80 },
-    ],
-  },
-  {
-    categoria: 'Estética',
-    servicios: [
-      { id: 'e1', nombre: 'Baño y corte básico', precio: 350 },
-      { id: 'e2', nombre: 'Baño y corte completo', precio: 550 },
-      { id: 'e3', nombre: 'Limpieza dental', precio: 800 },
-      { id: 'e4', nombre: 'Corte de uñas', precio: 80 },
-    ],
-  },
-];
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -255,8 +175,8 @@ const generarPDF = ({ paciente, expedienteId, consulta, serviciosSeleccionados, 
   doc.text('SERVICIOS PRESTADOS', margin + 3, cursorY + 4.8);
   cursorY += 10;
 
-  // Agrupar servicios seleccionados por categoría
-  const serviciosPorCategoria = CATALOGO.reduce((acc, cat) => {
+  // Agrupar servicios seleccionados por categoría (respetando el orden del catálogo)
+  const serviciosPorCategoria = catalogo.reduce((acc, cat) => {
     const selEnCat = cat.servicios.filter((s) =>
       serviciosSeleccionados.some((sel) => sel.id === s.id)
     );
@@ -419,6 +339,11 @@ export default function Recibo() {
   const [consulta, setConsulta] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
 
+  // Catálogo de servicios cargado desde la BD
+  const [catalogo, setCatalogo] = useState([]); // [{ categoria, servicios: [{ id, nombre, precio }] }]
+  const [loadingCatalogo, setLoadingCatalogo] = useState(true);
+  const [errorCatalogo, setErrorCatalogo] = useState(null);
+
   // Servicios seleccionados: { [id]: true/false }
   const [seleccionados, setSeleccionados] = useState({});
 
@@ -426,6 +351,36 @@ export default function Recibo() {
   const [guardando, setGuardando] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
   const [mensaje, setMensaje] = useState(null); // { tipo: 'ok'|'error', texto }
+
+  // ── Carga del catálogo desde la BD ────────────────────────
+  useEffect(() => {
+    const cargarCatalogo = async () => {
+      setLoadingCatalogo(true);
+      setErrorCatalogo(null);
+      try {
+        const res = await API.get('/servicios-catalogo');
+        // La API devuelve un array plano: [{ id, categoria, nombre, precio, ... }]
+        // Agrupamos por categoría para mantener la estructura del componente
+        const agrupado = res.data.reduce((acc, srv) => {
+          const cat = acc.find((c) => c.categoria === srv.categoria);
+          const item = { id: srv.id, nombre: srv.nombre, precio: Number(srv.precio) };
+          if (cat) {
+            cat.servicios.push(item);
+          } else {
+            acc.push({ categoria: srv.categoria, servicios: [item] });
+          }
+          return acc;
+        }, []);
+        setCatalogo(agrupado);
+      } catch (err) {
+        console.error('Error cargando catálogo de servicios:', err);
+        setErrorCatalogo('No se pudo cargar el catálogo de servicios.');
+      } finally {
+        setLoadingCatalogo(false);
+      }
+    };
+    cargarCatalogo();
+  }, []);
 
   // ── Carga inicial ──────────────────────────────────────────
   useEffect(() => {
@@ -480,7 +435,7 @@ export default function Recibo() {
   }, [pacienteId, expedienteId]);
 
   // ── Servicios seleccionados (lista plana) ──────────────────
-  const serviciosSeleccionados = CATALOGO.flatMap((cat) =>
+  const serviciosSeleccionados = catalogo.flatMap((cat) =>
     cat.servicios.filter((s) => seleccionados[s.id])
   );
 
@@ -636,7 +591,21 @@ export default function Recibo() {
             Selecciona los servicios
           </h2>
 
-          {CATALOGO.map((cat) => (
+          {loadingCatalogo ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
+            </div>
+          ) : errorCatalogo ? (
+            <div className="px-4 py-3 rounded-xl text-sm font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
+              ❌ {errorCatalogo}
+            </div>
+          ) : catalogo.length === 0 ? (
+            <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-6">
+              No hay servicios en el catálogo.
+            </p>
+          ) : null}
+
+          {catalogo.map((cat) => (
             <div
               key={cat.categoria}
               className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm"

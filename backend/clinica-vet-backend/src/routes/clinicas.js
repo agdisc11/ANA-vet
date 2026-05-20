@@ -3,10 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db/connection');
-const { authMiddleware, soloClinica } = require('../middleware/authMiddleware');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'saas_vet_secret_2026';
-const SALT_ROUNDS = 10;
+const { authMiddleware, soloClinica, JWT_SECRET, SALT_ROUNDS } = require('../middleware/authMiddleware');
 
 // ============================================================
 // POST /api/clinicas/registro

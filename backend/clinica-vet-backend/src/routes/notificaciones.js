@@ -101,7 +101,3 @@ router.get('/', authMiddleware, (req, res) => {
 });
 
 module.exports = router;
-
-setInterval(() => {
-  console.log('[Worker] Escaneando citas próximas 24/48h para alertas...');
-}, 24 * 60 * 60 * 1000);

@@ -1,20 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/connection');
-const { authMiddleware } = require('../middleware/authMiddleware');
-
-// Roles con permiso para vetar/dar de baja tutores:
-// tipo 'clinica' (Administrador) O tipo 'empleado' con rol_id 2 (Veterinario)
-function puedeGestionarTutores(req, res, next) {
-  if (!req.user) {
-    return res.status(403).json({ error: 'Acceso denegado.' });
-  }
-  const { tipo, rol_id } = req.user;
-  if (tipo === 'clinica' || (tipo === 'empleado' && Number(rol_id) === 2)) {
-    return next();
-  }
-  return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de Administrador o Veterinario.' });
-}
+const { authMiddleware, clinicaOVeterinario } = require('../middleware/authMiddleware');
 
 // Protege todas las rutas con autenticación
 router.use(authMiddleware);
@@ -68,7 +55,7 @@ router.put('/:id', (req, res) => {
 });
 
 // Soft Delete: Dar de baja (estatus = 'inactivo')
-router.delete('/:id', puedeGestionarTutores, (req, res) => {
+router.delete('/:id', clinicaOVeterinario, (req, res) => {
   const tutorId = req.params.id;
   const clinicaId = req.user.clinica_id;
 
@@ -86,7 +73,7 @@ router.delete('/:id', puedeGestionarTutores, (req, res) => {
 });
 
 // Vetar tutor (estatus = 'vetado')
-router.put('/:id/vetar', puedeGestionarTutores, (req, res) => {
+router.put('/:id/vetar', clinicaOVeterinario, (req, res) => {
   const tutorId = req.params.id;
   const clinicaId = req.user.clinica_id;
 

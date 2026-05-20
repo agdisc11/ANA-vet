@@ -51,7 +51,7 @@ export const breedColorMap = {
   frisón: '#2D3748',
 };
 
-function stringToColor(value) {
+export function stringToColor(value) {
   const str = value?.trim().toLowerCase() || '';
   let hash = 0;
   for (let i = 0; i < str.length; i += 1) {

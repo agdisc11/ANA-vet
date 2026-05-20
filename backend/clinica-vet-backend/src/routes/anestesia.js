@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/connection');
+const { authMiddleware } = require('../middleware/authMiddleware');
+
+// Protege todas las rutas con autenticación
+router.use(authMiddleware);
 
 router.post('/', (req, res) => {
   const { cirugia_id, protocolo, farmacos, dosis, observaciones } = req.body;
