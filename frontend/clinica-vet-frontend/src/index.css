@@ -26,6 +26,40 @@
     @apply bg-slate-950 text-slate-100;
   }
 
+  /* Controles de formulario con el color de la marca */
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'],
+  select,
+  progress {
+    accent-color: #7c3aed;
+  }
+
+  /* Selección de texto con tono de marca */
+  ::selection {
+    @apply bg-violet-200 text-violet-900;
+  }
+  .dark ::selection {
+    @apply bg-violet-500/40 text-white;
+  }
+
+  /* Anillo de foco consistente para navegación por teclado */
+  :focus-visible {
+    @apply outline-none ring-2 ring-violet-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 rounded-lg;
+  }
+
+  /* Respeta la preferencia de movimiento reducido */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

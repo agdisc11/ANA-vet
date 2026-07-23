@@ -1,6 +1,13 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'saas_vet_secret_2026';
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    'FATAL: La variable de entorno JWT_SECRET no está definida. ' +
+    'La aplicación no puede iniciarse sin ella. ' +
+    'Defínela en tu archivo .env antes de arrancar el servidor.'
+  );
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 const SALT_ROUNDS = 10;
 
 /**
@@ -47,18 +54,14 @@ function soloEmpleado(req, res, next) {
 }
 
 /**
- * Middleware que permite acceso a tipo 'clinica' (Admin)
- * O a tipo 'empleado' con rol_id 2 (Veterinario).
+ * Middleware que permite acceso a tipo 'clinica' (Admin) o a empleados
+ * con permiso clínico (rol "Veterinario").
+ *
+ * Antes comparaba rol_id === 2, que solo era "Veterinario" en la primera
+ * clínica registrada (los IDs de roles son AUTO_INCREMENT globales).
+ * Ahora delega en el RBAC por nombre de rol (src/auth/permisos.js).
  */
-function clinicaOVeterinario(req, res, next) {
-  if (!req.user) {
-    return res.status(403).json({ error: 'Acceso denegado.' });
-  }
-  const { tipo, rol_id } = req.user;
-  if (tipo === 'clinica' || (tipo === 'empleado' && Number(rol_id) === 2)) {
-    return next();
-  }
-  return res.status(403).json({ error: 'Acceso restringido a Administrador o Veterinario.' });
-}
+const { requierePermiso } = require('../auth/permisos');
+const clinicaOVeterinario = requierePermiso('clinico.acceso');
 
 module.exports = { authMiddleware, soloClinica, soloEmpleado, clinicaOVeterinario, JWT_SECRET, SALT_ROUNDS };

@@ -1,0 +1,18 @@
+# OPTIMIZACIÓN DE TOKENS Y COMPORTAMIENTO
+
+## 1. Archivos y Carpetas Prohibidos
+NUNCA leas ni analices los siguientes directorios y archivos a menos que te lo pida explícitamente y te dé permiso:
+- `node_modules/` (¡Absolutamente prohibido!)
+- `.git/` y archivos de historial.
+- Archivos de bloqueo de dependencias (`package-lock.json`, `yarn.lock`).
+- Archivos multimedia, binarios o documentos generados (por ejemplo, los PDFs de los reportes, imágenes, o archivos de bases de datos locales `.sqlite` / `.db`).
+- Carpetas de compilación o caché (`dist/`, `build/`, `.next/`).
+
+## 2. Economía de Respuesta (Ahorro de Saldo)
+- **Cero relleno:** Sé directo. Elimina los saludos, introducciones largas, disculpas o explicaciones obvias. Ve directo al código o al problema.
+- **Edición quirúrgica:** Cuando modifiques un archivo, usa tus herramientas de edición para reemplazar solo las líneas necesarias. NUNCA me imprimas en el chat el archivo completo modificado.
+- **Piensa en voz baja:** Limita el uso de etiquetas de pensamiento o razonamiento profundo a menos que estemos resolviendo un bug complejo de arquitectura. Para sintaxis o dudas simples, responde de inmediato.
+
+## 3. Navegación del Proyecto
+- **No busques a ciegas:** Antes de ejecutar búsquedas globales en el proyecto buscando dónde se define algo, revisa la estructura básica de carpetas de Node.js (rutas, controladores, modelos). 
+- **Límites de lectura:** Si te pido revisar un archivo y notas que tiene más de 500 líneas, detente y pregúntame en qué función específica o bloque te debes enfocar antes de leerlo todo y gastar tokens de contexto.

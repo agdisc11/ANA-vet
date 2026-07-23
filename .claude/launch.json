@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "backend/clinica-vet-backend",
+      "port": 4000
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "frontend/clinica-vet-frontend",
+      "port": 3000
+    },
+    {
+      "name": "frontend-build",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "serve", "-s", "frontend/clinica-vet-frontend/build", "-l", "3000"],
+      "port": 3000
+    }
+  ]
+}
