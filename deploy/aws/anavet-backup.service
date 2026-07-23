@@ -1,0 +1,15 @@
+# Respaldo puntual de la BD de ANA-vet (lo agenda anavet-backup.timer).
+#
+# Instalar:  sudo cp deploy/aws/anavet-backup.{service,timer} /etc/systemd/system/
+#            sudo systemctl daemon-reload
+#            sudo systemctl enable --now anavet-backup.timer
+
+[Unit]
+Description=Respaldo de la base de datos de ANA-vet
+After=mariadb.service
+
+[Service]
+Type=oneshot
+# Se invoca con bash para no depender del bit de ejecución del archivo
+# (git en Windows no lo preserva).
+ExecStart=/usr/bin/bash /opt/anavet/deploy/aws/backup.sh

@@ -1,0 +1,13 @@
+# Dispara el respaldo de ANA-vet todos los días a las 03:30.
+
+[Unit]
+Description=Respaldo diario de ANA-vet
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+# Si la instancia estaba apagada a esa hora (típico en el Learner Lab),
+# el respaldo se ejecuta en el siguiente arranque en vez de perderse.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

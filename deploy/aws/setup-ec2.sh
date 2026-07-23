@@ -137,6 +137,13 @@ sudo systemctl daemon-reload
 sudo systemctl enable --quiet anavet-backend
 sudo systemctl restart anavet-backend
 
+# Respaldo diario de la BD (timer de systemd).
+sudo cp "$DESTINO/deploy/aws/anavet-backup.service" /etc/systemd/system/
+sudo cp "$DESTINO/deploy/aws/anavet-backup.timer" /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --quiet --now anavet-backup.timer
+echo "  Respaldo diario activo (03:30 → /var/backups/anavet)"
+
 # ─────────────────────────────────────────────────────────────
 paso "8/9 · Frontend"
 cd "$FRONTEND_DIR"

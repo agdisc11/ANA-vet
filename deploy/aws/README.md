@@ -255,16 +255,64 @@ cobra por hora aunque la instancia esté apagada. `destroy.sh` lo hace.
 
 ---
 
-## Sobre HTTPS
+## De demo a producción
 
-El despliegue va por **HTTP**. El navegador marcará "No seguro" y avisará
-en el campo de contraseña. Funciona, pero no luce.
+La demo del Learner Lab sirve para enseñar, pero **antes de cobrarle a una
+clínica real** hay que cerrar tres cosas. Las dos primeras ya están en el
+repo; la tercera necesita tu decisión (y tu tarjeta).
 
-Para una demo supervisada es aceptable. Si necesitas HTTPS, la vía es un
-dominio real + Let's Encrypt (`certbot`), y con una IP que cambia cada
-sesión eso se vuelve incómodo — a esas alturas conviene más un host de
-verdad. **No metas datos reales de pacientes ni de clientes** en un
-despliegue por HTTP.
+### 1 · Respaldos (ya activo)
+
+Cada despliegue instala un timer de systemd que respalda la base a diario
+(03:30) en `/var/backups/anavet`, con rotación de 14 días. Perder los
+expedientes de una clínica es el peor escenario posible, así que esto no
+es opcional.
+
+```bash
+sudo bash deploy/aws/backup.sh                 # respaldo manual ahora
+systemctl list-timers anavet-backup.timer      # ver el próximo automático
+ls -lh /var/backups/anavet/                     # respaldos en disco
+```
+
+> En un host real, manda los respaldos **fuera de la máquina**: define
+> `BACKUP_S3=tu-bucket/anavet` (con el AWS CLI configurado) y `backup.sh`
+> los sube a S3. Un respaldo en el mismo disco que la BD no te salva si el
+> disco muere.
+>
+> Restaurar: `gunzip < anavet_FECHA.sql.gz | sudo mysql clinica_veterinaria`
+
+### 2 · HTTPS (listo, necesita un dominio)
+
+Por HTTP el navegador marca "No seguro" y, con datos de clientes, es un
+problema legal (LFPDPPP en México). Para activarlo necesitas un dominio
+(~$200 MXN/año) apuntando a la instancia; luego, en un comando:
+
+```bash
+sudo bash deploy/aws/enable-https.sh clinica.tudominio.com tu@correo.com
+```
+
+Emite un certificado gratuito de Let's Encrypt, configura nginx y fuerza
+la redirección a HTTPS. El backend acepta el nuevo origen sin tocar nada
+(su CORS ya permite el mismo-origen). El certificado se renueva solo.
+
+> **No metas datos reales de pacientes en un despliegue por HTTP.**
+
+### 3 · Salir del Learner Lab (host 24/7)
+
+El Learner Lab se detiene cada sesión: **no sirve para clínicas que pagan**.
+El kit funciona igual en cualquier Linux; solo cambia dónde vive. Opciones
+típicas (precios aproximados, verifícalos):
+
+| Host | Costo aprox. | Notas |
+|---|---|---|
+| AWS Lightsail | ~$7–12 USD/mes | Mismo ecosistema, IP fija incluida, simple |
+| DigitalOcean / Hetzner | ~$5–8 USD/mes | VPS estándar; Hetzner es el más barato |
+| Contabo | ~$5 USD/mes | Mucho recurso por poco; soporte más lento |
+
+Una sola instancia chica (1–2 GB RAM) aguanta **varias clínicas** a la vez
+—es multi-tenant—, así que el hosting es un costo casi **fijo**, no por
+clínica. Migrar: levanta el host, corre `setup-ec2.sh` (o los pasos del
+manual), restaura el último respaldo, apunta el dominio y listo.
 
 ---
 
