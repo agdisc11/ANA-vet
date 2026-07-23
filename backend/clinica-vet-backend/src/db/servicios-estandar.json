@@ -1,0 +1,320 @@
+[
+  {
+    "categoria": "Cirugia",
+    "nombre": "Castración canino grande",
+    "precio": 1800,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Castración canino mediano",
+    "precio": 1500,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Castración canino pequeño",
+    "precio": 1200,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Castración felino",
+    "precio": 800,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Cirugía general",
+    "precio": 2500,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Extracción dental",
+    "precio": 800,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Limpieza dental",
+    "precio": 600,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Ovariohisterectomía canina grande",
+    "precio": 2600,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Ovariohisterectomía canina mediana",
+    "precio": 2200,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Ovariohisterectomía canina pequeña",
+    "precio": 1800,
+    "activo": 1
+  },
+  {
+    "categoria": "Cirugia",
+    "nombre": "Ovariohisterectomía felina",
+    "precio": 1200,
+    "activo": 1
+  },
+  {
+    "categoria": "Consultas",
+    "nombre": "Consulta de seguimiento",
+    "precio": 250,
+    "activo": 1
+  },
+  {
+    "categoria": "Consultas",
+    "nombre": "Consulta de urgencias",
+    "precio": 600,
+    "activo": 1
+  },
+  {
+    "categoria": "Consultas",
+    "nombre": "Consulta especialidad",
+    "precio": 500,
+    "activo": 1
+  },
+  {
+    "categoria": "Consultas",
+    "nombre": "Consulta general",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Consultas",
+    "nombre": "Consulta geriátrica",
+    "precio": 450,
+    "activo": 1
+  },
+  {
+    "categoria": "Estetica",
+    "nombre": "Baño medicado",
+    "precio": 300,
+    "activo": 1
+  },
+  {
+    "categoria": "Estetica",
+    "nombre": "Baño y corte grande",
+    "precio": 450,
+    "activo": 1
+  },
+  {
+    "categoria": "Estetica",
+    "nombre": "Baño y corte mediano",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Estetica",
+    "nombre": "Baño y corte pequeño",
+    "precio": 250,
+    "activo": 1
+  },
+  {
+    "categoria": "Estetica",
+    "nombre": "Corte de uñas",
+    "precio": 80,
+    "activo": 1
+  },
+  {
+    "categoria": "Estetica",
+    "nombre": "Deslanado",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Estetica",
+    "nombre": "Limpieza de oídos",
+    "precio": 100,
+    "activo": 1
+  },
+  {
+    "categoria": "Hospitalizacion",
+    "nombre": "Hospitalización día (gato)",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Hospitalizacion",
+    "nombre": "Hospitalización día (perro)",
+    "precio": 400,
+    "activo": 1
+  },
+  {
+    "categoria": "Hospitalizacion",
+    "nombre": "Hospitalización noche (perro)",
+    "precio": 500,
+    "activo": 1
+  },
+  {
+    "categoria": "Hospitalizacion",
+    "nombre": "Terapia intensiva UCI",
+    "precio": 800,
+    "activo": 1
+  },
+  {
+    "categoria": "Laboratorio",
+    "nombre": "Biometría hemática",
+    "precio": 380,
+    "activo": 1
+  },
+  {
+    "categoria": "Laboratorio",
+    "nombre": "Coproscópico",
+    "precio": 220,
+    "activo": 1
+  },
+  {
+    "categoria": "Laboratorio",
+    "nombre": "Cultivo y antibiograma",
+    "precio": 750,
+    "activo": 1
+  },
+  {
+    "categoria": "Laboratorio",
+    "nombre": "Prueba de Distemper",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Laboratorio",
+    "nombre": "Prueba de Parvo",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Laboratorio",
+    "nombre": "Química sanguínea 12 elementos",
+    "precio": 650,
+    "activo": 1
+  },
+  {
+    "categoria": "Laboratorio",
+    "nombre": "Química sanguínea 6 elementos",
+    "precio": 450,
+    "activo": 1
+  },
+  {
+    "categoria": "Laboratorio",
+    "nombre": "Urianálisis",
+    "precio": 280,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Colocación de catéter",
+    "precio": 200,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Desparasitación externa",
+    "precio": 120,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Desparasitación interna",
+    "precio": 150,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Electrocardiograma",
+    "precio": 550,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Fluidoterapia (por día)",
+    "precio": 300,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Microchip",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Nebulización",
+    "precio": 200,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Radiografía con contraste",
+    "precio": 650,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Radiografía simple",
+    "precio": 450,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Sutura",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Ultrasonido abdominal",
+    "precio": 700,
+    "activo": 1
+  },
+  {
+    "categoria": "Procedimientos",
+    "nombre": "Vendaje",
+    "precio": 150,
+    "activo": 1
+  },
+  {
+    "categoria": "Vacunas",
+    "nombre": "Vacuna antirrábica",
+    "precio": 280,
+    "activo": 1
+  },
+  {
+    "categoria": "Vacunas",
+    "nombre": "Vacuna Bordetella",
+    "precio": 280,
+    "activo": 1
+  },
+  {
+    "categoria": "Vacunas",
+    "nombre": "Vacuna Leptospira",
+    "precio": 300,
+    "activo": 1
+  },
+  {
+    "categoria": "Vacunas",
+    "nombre": "Vacuna leucemia felina",
+    "precio": 350,
+    "activo": 1
+  },
+  {
+    "categoria": "Vacunas",
+    "nombre": "Vacuna séxtuple",
+    "precio": 320,
+    "activo": 1
+  },
+  {
+    "categoria": "Vacunas",
+    "nombre": "Vacuna triple felina",
+    "precio": 300,
+    "activo": 1
+  }
+]

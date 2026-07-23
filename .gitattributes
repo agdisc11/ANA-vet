@@ -1,0 +1,16 @@
+# Normalización de finales de línea.
+#
+# Los scripts y unidades de despliegue se EJECUTAN EN LINUX. Con
+# core.autocrlf=true (el valor por defecto de Git en Windows) el checkout
+# los dejaría con CRLF y fallarían así:
+#
+#   bash: $'\r': command not found
+#
+# Importa aunque el repo se edite solo desde Windows: provision.sh sube
+# user-data.sh a EC2 leyéndolo de la copia de trabajo, no de GitHub.
+*.sh        text eol=lf
+*.service   text eol=lf
+*.conf      text eol=lf
+
+# El esquema y los seeds se cargan con `mysql <` dentro de la instancia.
+*.sql       text eol=lf
