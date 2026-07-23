@@ -193,6 +193,25 @@ cd /opt/anavet/backend/clinica-vet-backend && node scripts/seed-servicios.js EMA
 > pantalla para dar servicios de alta, sin esto no se puede emitir ningún
 > recibo.
 
+### Poblar con datos realistas (opcional pero recomendado)
+
+Para que la demo no se vea vacía, `scripts/seed-demo.js` crea empleados
+(uno por rol), tutores, pacientes, expedientes, consultas y vacunas con
+datos coherentes — **a través de la API**, así que de paso es una prueba
+de humo de todo el sistema. Se corre desde cualquier máquina apuntando a
+la IP del despliegue:
+
+```bash
+cd backend/clinica-vet-backend
+API_BASE=http://LA-IP/api CLINICA_EMAIL=correo@clinica.com CLINICA_PASSWORD=... \
+  node scripts/seed-demo.js
+```
+
+Registra la clínica si no existe (si existe, solo la puebla). Es
+idempotente: si ya tiene tutores, no vuelve a sembrar (usa `FORCE=1`
+para forzar). Los empleados quedan con la contraseña de `EMP_PASSWORD`
+(por defecto `Demo2026!`) para poder entrar como cada rol en la demo.
+
 ---
 
 ## Reanudar tras caducar la sesión
