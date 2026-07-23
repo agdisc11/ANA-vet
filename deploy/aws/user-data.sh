@@ -10,7 +10,7 @@
 set -euxo pipefail
 
 REPO_RAMA="${REPO_RAMA:-main}"
-URL_SETUP="https://raw.githubusercontent.com/agdisc11/vetapp/$REPO_RAMA/deploy/aws/setup-ec2.sh"
+URL_SETUP="https://raw.githubusercontent.com/agdisc11/ANA-vet/$REPO_RAMA/deploy/aws/setup-ec2.sh"
 
 # Esperar a que la red resuelva DNS: cloud-init a veces corre antes.
 for _ in $(seq 1 30); do

@@ -4,7 +4,7 @@
 **Versión:** 3.0 (Refinamiento Clínico Masivo)  
 **Estado:** ✅ 100% Operativo — 10 categorías activas  
 **Stack:** React 18 · Node.js/Express · MySQL (MariaDB 10.4) · Tailwind CSS  
-**Repositorio:** https://github.com/agdisc11/vetapp
+**Repositorio:** https://github.com/agdisc11/ANA-vet
 
 ---
 
@@ -611,4 +611,4 @@ Editar `CLINICAL_CONSTANTS` en `Conversiones.js`:
 
 *Documento actualizado a la versión 3.0 — Refinamiento Clínico Masivo (2026-05-16)*  
 *Stack: React 18 · Node.js/Express · MySQL (MariaDB 10.4) · Tailwind CSS*  
-*Repositorio: https://github.com/agdisc11/vetapp*
+*Repositorio: https://github.com/agdisc11/ANA-vet*

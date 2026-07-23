@@ -160,7 +160,7 @@ icacls "$env:USERPROFILE\Downloads\labsuser.pem" /inheritance:r /grant:r "$($env
 ### B.3 · Instalar
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/agdisc11/vetapp/main/deploy/aws/setup-ec2.sh -o setup.sh && bash setup.sh
+curl -fsSL https://raw.githubusercontent.com/agdisc11/ANA-vet/main/deploy/aws/setup-ec2.sh -o setup.sh && bash setup.sh
 ```
 
 Tarda unos 5-10 minutos. El script instala Node, MariaDB y nginx, carga

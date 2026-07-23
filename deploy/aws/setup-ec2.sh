@@ -5,7 +5,7 @@
 # deja el backend como servicio systemd.
 #
 #   Ejecutar COMO ec2-user (no como root):
-#     curl -fsSL https://raw.githubusercontent.com/agdisc11/vetapp/main/deploy/aws/setup-ec2.sh -o setup.sh
+#     curl -fsSL https://raw.githubusercontent.com/agdisc11/ANA-vet/main/deploy/aws/setup-ec2.sh -o setup.sh
 #     bash setup.sh
 #
 # Es idempotente: se puede volver a lanzar para actualizar el despliegue.
@@ -14,7 +14,7 @@
 # las sesiones abiertas).
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/agdisc11/vetapp.git}"
+REPO_URL="${REPO_URL:-https://github.com/agdisc11/ANA-vet.git}"
 REPO_RAMA="${REPO_RAMA:-main}"
 DESTINO="/opt/anavet"
 WEB_ROOT="/var/www/anavet"
