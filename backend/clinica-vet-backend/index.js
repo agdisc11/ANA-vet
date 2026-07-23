@@ -12,21 +12,46 @@ const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
   : ['http://localhost:3001', 'http://localhost:3000'];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Permitir peticiones sin origin (ej. Postman, curl) o desde orígenes permitidos
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS: origen no permitido → ${origin}`));
-      }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  })
-);
+/**
+ * ¿La petición es del MISMO origen que la sirve?
+ *
+ * Detrás de un reverse-proxy (nginx sirviendo el front y /api en el mismo
+ * dominio) el navegador incluye la cabecera `Origin` en los POST/PUT/DELETE
+ * aunque NO sean cross-origin. Ese Origin coincide con el Host de la
+ * petición, así que comparándolos se permite el mismo-origen sea cual sea
+ * la IP o el dominio del despliegue — sin tener que enumerarlo en
+ * CORS_ORIGIN (clave en el Learner Lab, donde la IP cambia por sesión).
+ */
+function esMismoOrigen(origin, host) {
+  if (!origin || !host) return false;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
+// Forma delegada de `cors`: recibe el req, así se puede comparar Origin
+// con Host (la forma `origin: (origin, cb)` no da acceso a la petición).
+const corsDelegate = (req, callback) => {
+  const origin = req.header('Origin');
+  const permitido =
+    !origin ||                                   // curl, Postman, same-origin GET
+    allowedOrigins.includes(origin) ||           // orígenes configurados
+    esMismoOrigen(origin, req.header('Host'));    // same-origin tras el proxy
+  if (permitido) {
+    callback(null, {
+      origin: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+    });
+  } else {
+    callback(new Error(`CORS: origen no permitido → ${origin}`));
+  }
+};
+
+app.use(cors(corsDelegate));
 app.use(express.json({ limit: '1mb' }));
 
 // ── Health check (monitoreo / readiness) ──────────────────────
